@@ -122,24 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!114 &170360744 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6517238571364880788, guid: 9eab1de4da5c9c944b88735b82397297,
-    type: 3}
-  m_PrefabInstance: {fileID: 399703663}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f19c27880ab3ed47b26241b2a081741, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!4 &170360746 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2048616764513898630, guid: 9eab1de4da5c9c944b88735b82397297,
-    type: 3}
-  m_PrefabInstance: {fileID: 399703663}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &399703663
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -202,6 +184,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Samurai_Green_A
+      objectReference: {fileID: 0}
+    - target: {fileID: 3225874551983908691, guid: 9eab1de4da5c9c944b88735b82397297,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -302,6 +289,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &912008199
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 912008200}
+  m_Layer: 0
+  m_Name: SpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &912008200
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 912008199}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 13.4, y: 1.86, z: 17.783173}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -407,7 +425,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d0c913766f43d34ea88b732e5b52169, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 170360746}
   offset: {x: 0, y: 3, z: -6}
   smoothSpeed: 10
 --- !u!1 &1190800324
@@ -422,7 +439,7 @@ GameObject:
   - component: {fileID: 1190800327}
   - component: {fileID: 1190800326}
   m_Layer: 5
-  m_Name: Text_Speed
+  m_Name: SpeedText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -556,7 +573,7 @@ GameObject:
   - component: {fileID: 1724486008}
   - component: {fileID: 1724486007}
   m_Layer: 5
-  m_Name: Text_Timer
+  m_Name: TimerText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -690,7 +707,6 @@ GameObject:
   - component: {fileID: 1734778056}
   - component: {fileID: 1734778055}
   - component: {fileID: 1734778054}
-  - component: {fileID: 1734778058}
   m_Layer: 5
   m_Name: GameUI
   m_TagString: Untagged
@@ -784,24 +800,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &1734778058
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1734778053}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49e3c73ea37aebb40904332ac9a4a688, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  carController: {fileID: 170360744}
-  speedLabel: {fileID: 1190800326}
-  driftPointsLabel: {fileID: 2101698047}
-  timerLabel: {fileID: 1724486007}
-  rewardLabel: {fileID: 2129025850}
-  levelDuration: 40
 --- !u!1 &1829694909
 GameObject:
   m_ObjectHideFlags: 0
@@ -963,6 +961,100 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2042684650
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2042684652}
+  - component: {fileID: 2042684651}
+  m_Layer: 0
+  m_Name: GameUIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2042684651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2042684650}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49e3c73ea37aebb40904332ac9a4a688, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speedLabel: {fileID: 1190800326}
+  driftPointsLabel: {fileID: 2101698047}
+  timerLabel: {fileID: 1724486007}
+  rewardLabel: {fileID: 2129025850}
+  levelDuration: 120
+--- !u!4 &2042684652
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2042684650}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 10.836773, y: -0.690421, z: 17.388975}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2046858462
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2046858464}
+  - component: {fileID: 2046858463}
+  m_Layer: 0
+  m_Name: CarSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2046858463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2046858462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d6039b44ea928e40888292710709d9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerCarSpawnPoint: {fileID: 912008200}
+--- !u!4 &2046858464
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2046858462}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.7008467, y: -7.011031, z: 12.707156}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2101698046
 GameObject:
   m_ObjectHideFlags: 0
@@ -975,7 +1067,7 @@ GameObject:
   - component: {fileID: 2101698048}
   - component: {fileID: 2101698047}
   m_Layer: 5
-  m_Name: Text_Points
+  m_Name: PointsText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1109,7 +1201,7 @@ GameObject:
   - component: {fileID: 2129025851}
   - component: {fileID: 2129025850}
   m_Layer: 5
-  m_Name: Text_Reward
+  m_Name: RewardText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1241,3 +1333,6 @@ SceneRoots:
   - {fileID: 399703663}
   - {fileID: 1734778057}
   - {fileID: 1978709692}
+  - {fileID: 2046858464}
+  - {fileID: 912008200}
+  - {fileID: 2042684652}

@@ -1,68 +1,105 @@
-using UnityEngine;
+using System;
 using System.IO;
+using UnityEngine;
 
+/// <summary>
+/// Менеджер для чтения и записи player_stats.json.
+/// Если файла нет – создаём дефолтный.
+/// Подходит для динамических данных игрока (деньги, уровень...).
+/// </summary>
 public static class PlayerDataManager
 {
-    private static string _fileName = "player_stats.json";
+    private const string FileName = "player_stats.json";
 
-    /// <summary>
-    /// Путь к файлу с учётом платформы.
-    /// Например: Application.persistentDataPath
-    /// </summary>
     private static string GetFilePath()
     {
-        return Path.Combine(Application.persistentDataPath, _fileName);
+        return Path.Combine(Application.persistentDataPath, FileName);
     }
 
     /// <summary>
-    /// Сохранить статистику игрока в JSON.
-    /// </summary>
-    public static void SavePlayerStats(PlayerStats stats)
-    {
-        try
-        {
-            string json = JsonUtility.ToJson(stats, true);
-            File.WriteAllText(GetFilePath(), json);
-            Debug.Log($"[PlayerDataManager] Player stats saved to: {GetFilePath()}");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("SavePlayerStats error: " + e);
-        }
-    }
-
-    /// <summary>
-    /// Загрузить статистику игрока из JSON.
-    /// Если файла нет — вернём новую статистику по умолчанию.
+    /// Загружаем PlayerStats. Если файла нет, создаём дефолт и возвращаем его.
     /// </summary>
     public static PlayerStats LoadPlayerStats()
     {
         string path = GetFilePath();
+
         if (!File.Exists(path))
         {
-            Debug.LogWarning("Player stats file not found, creating new stats...");
-            // Возвращаем новые статы по умолчанию
-            return new PlayerStats
-            {
-                playerName = "Player",
-                money = 0,
-                totalDriftPoints = 0,
-                level = 1
-            };
+            Debug.LogWarning($"[PlayerDataManager] File not found at {path}, creating default...");
+            CreateDefaultPlayerFile(path);
         }
 
         try
         {
             string json = File.ReadAllText(path);
             PlayerStats loadedStats = JsonUtility.FromJson<PlayerStats>(json);
-            Debug.Log($"[PlayerDataManager] Player stats loaded from: {path}");
+
+            if (loadedStats == null)
+            {
+                Debug.LogWarning("[PlayerDataManager] JSON parsed but returned null. Using default stats.");
+                loadedStats = CreateDefaultPlayerStats();
+            }
+
+            Debug.Log($"[PlayerDataManager] Loaded player_stats.json from {path}");
             return loadedStats;
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            Debug.LogError("LoadPlayerStats error: " + e);
-            // Если ошибка, вернём что-нибудь по умолчанию
-            return new PlayerStats();
+            Debug.LogError($"[PlayerDataManager] Load error: {e}");
+            return CreateDefaultPlayerStats();
         }
+    }
+
+    /// <summary>
+    /// Сохраняем текущее состояние PlayerStats (например, после изменения денег).
+    /// </summary>
+    public static void SavePlayerStats(PlayerStats stats)
+    {
+        string path = GetFilePath();
+        try
+        {
+            string json = JsonUtility.ToJson(stats, true);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
+            File.WriteAllText(path, json);
+
+            Debug.Log($"[PlayerDataManager] Saved player_stats.json to {path}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[PlayerDataManager] Save error: {e}");
+        }
+    }
+
+    //--------------------------------------------------------------------------
+    // Вспомогательные методы
+    //--------------------------------------------------------------------------
+
+    private static void CreateDefaultPlayerFile(string path)
+    {
+        PlayerStats def = CreateDefaultPlayerStats();
+        string json = JsonUtility.ToJson(def, true);
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
+            File.WriteAllText(path, json);
+            Debug.Log($"[PlayerDataManager] Created default player_stats.json at {path}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[PlayerDataManager] Could not create default file: {e}");
+        }
+    }
+
+    private static PlayerStats CreateDefaultPlayerStats()
+    {
+        return new PlayerStats
+        {
+            playerName = "Player",
+            money = 1000.0f,
+            totalDriftPoints = 2500.5f,
+            level = 3
+        };
     }
 }

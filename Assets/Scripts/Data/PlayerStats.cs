@@ -6,4 +6,6 @@ public class PlayerStats
     public float totalDriftPoints;
     public int level;
     
+    // public int selectedCarIndex;
+    // public int totalWins;
 }

@@ -5,10 +5,15 @@ public class Bootstrapper : MonoBehaviour
 {
     private void Awake()
     {
-        // Инициализируем все основные данные один раз при запуске
-        GameData.Initialize();
+        // 1) Загружаем машины
+        CarStats[] allCars = CarDataManager.LoadAllCarStats();
+        Debug.Log($"[Bootstrap] Cars loaded: {allCars.Length}");
 
-        // Переходим на сцену меню (или любую другую)
-        SceneManager.LoadScene("Menu");
+        // 2) Загружаем игрока
+        PlayerStats playerStats = PlayerDataManager.LoadPlayerStats();
+        Debug.Log($"[Bootstrap] Player name = {playerStats.playerName}, money = {playerStats.money}");
+
+        // Дальше переход в сцену Меню
+        SceneManager.LoadScene("MenuScene");
     }
 }

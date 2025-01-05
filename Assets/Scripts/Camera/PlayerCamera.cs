@@ -1,12 +1,17 @@
 using UnityEngine;
 
-public class ThirdPersonCamera : MonoBehaviour
+public class PlayerCamera : MonoBehaviour
 {
-    public Transform target;         // Ссылка на объект машины
+    private Transform target;         // Ссылка на объект машины
     public Vector3 offset = new Vector3(0f, 3f, -6f);
     public float smoothSpeed = 5f;   // Скорость сглаживания движения
+
+    private void Start()
+    {
+      target = GameObject.FindGameObjectWithTag("Player").transform;  
+    }
     
-    void LateUpdate()
+    private void LateUpdate()
     {
         if (!target) return;
         

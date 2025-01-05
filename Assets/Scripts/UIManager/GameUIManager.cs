@@ -3,8 +3,10 @@ using TMPro;
 
 public class GameUIManager : MonoBehaviour
 {
-    [Header("References")]
-    public CarController carController;   // Ссылка на скрипт CarController
+    [Header("References")] 
+    
+    private GameObject _currentCar;
+    private CarController _carController;   // Ссылка на скрипт CarController
     public TMP_Text speedLabel;           // UI для скорости
     public TMP_Text driftPointsLabel;     // UI для очков
     public TMP_Text timerLabel;           // UI для таймера
@@ -25,11 +27,12 @@ public class GameUIManager : MonoBehaviour
         _timeLeft = levelDuration;
         _driftPoints = 0f;
         _levelOver = false;
-
+        _currentCar = GameObject.FindWithTag("Player");
+        _carController = _currentCar.GetComponent<CarController>();
         // Подпишемся на события дрифта, чтобы знать, когда начался/закончился
-        if (carController != null)
+        if (_carController != null)
         {
-            carController.OnDriftEvent += HandleDriftEvent;
+            _carController.OnDriftEvent += HandleDriftEvent;
         }
     }
 
@@ -46,10 +49,10 @@ public class GameUIManager : MonoBehaviour
             }
 
             // Если машина дрифтует, прибавляем очки (можно по формуле)
-            if (carController != null && carController.IsDrifting)
+            if (_carController != null && _carController.IsDrifting)
             {
                 // Пример: очки зависят от скорости
-                float speedFactor = carController.CurrentSpeedKmh;
+                float speedFactor = _carController.CurrentSpeedKmh;
                 _driftPoints += speedFactor * 5f * Time.deltaTime;
             }
         }
@@ -74,9 +77,9 @@ public class GameUIManager : MonoBehaviour
     {
         _levelOver = true;
         // Блокируем управление:
-        if (carController != null)
+        if (_carController != null)
         {
-            carController.CanDrive = false;
+            _carController.CanDrive = false;
         }
 
         // Считаем награду
@@ -101,9 +104,9 @@ public class GameUIManager : MonoBehaviour
         }
 
         // Скорость
-        if (speedLabel != null && carController != null)
+        if (speedLabel != null && _carController != null)
         {
-            speedLabel.text = $"Speed: {carController.CurrentSpeedKmh:0.0} km/h";
+            speedLabel.text = $"Speed: {_carController.CurrentSpeedKmh:0.0} km/h";
         }
 
         // Очки дрифта
