@@ -1,4 +1,5 @@
 using UnityEngine;
+using Photon.Pun;
 
 [RequireComponent(typeof(Rigidbody))]
 public class CarController : MonoBehaviour
@@ -42,17 +43,36 @@ public class CarController : MonoBehaviour
 
     private bool  _wasDriftingLastFrame;
     private float _driftStartTime;
+    
+    private PhotonView _photonView;
+    
+    private bool _isOnMultiplayer;
 
     private void Start()
     {
+        if (GetComponent<PhotonView>() != null)
+        {
+            _isOnMultiplayer = true;
+            _photonView = GetComponent<PhotonView>();
+        }
+        else
+        {
+            _isOnMultiplayer = false;
+        }
+        
         _rb = GetComponent<Rigidbody>();
-
+        
         _rearLeftOriginalFriction  = rearLeftWheelCollider.sidewaysFriction;
         _rearRightOriginalFriction = rearRightWheelCollider.sidewaysFriction;
     }
 
     private void Update()
     {
+        if (!_isOnMultiplayer || PhotonNetwork.IsConnected && !_photonView.IsMine)
+        {
+            return;
+        }
+        
         if (CanDrive)
         {
             // Игровой ввод

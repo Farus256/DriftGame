@@ -1,63 +1,75 @@
 using UnityEngine;
 using TMPro;
+using Photon.Pun;
 
 public class GameUIManager : MonoBehaviour
 {
-    [Header("References")] 
-    
-    private GameObject _currentCar;
-    private CarController _carController;   // Ссылка на скрипт CarController
-    public TMP_Text speedLabel;           // UI для скорости
-    public TMP_Text driftPointsLabel;     // UI для очков
-    public TMP_Text timerLabel;           // UI для таймера
-    public TMP_Text rewardLabel;          // UI для итоговой награды
+    [Header("References")]
+    public TMP_Text speedLabel;
+    public TMP_Text driftPointsLabel;
+    public TMP_Text timerLabel;
+    public TMP_Text rewardLabel;
 
     [Header("Timer Settings")]
-    public float levelDuration = 120f; // 2 минуты
+    public float levelDuration = 120f;
 
+    private bool _levelOver;
     private float _timeLeft;
-    private bool  _levelOver;
-
-    // Подсчёт очков
     private float _driftPoints;
     private float _baseReward;
+
+    private CarController _carController;
 
     private void Start()
     {
         _timeLeft = levelDuration;
         _driftPoints = 0f;
         _levelOver = false;
-        _currentCar = GameObject.FindWithTag("Player");
-        _carController = _currentCar.GetComponent<CarController>();
-        // Подпишемся на события дрифта, чтобы знать, когда начался/закончился
-        if (_carController != null)
+
+        FindLocalPlayerCar();
+    }
+    
+    private void FindLocalPlayerCar()
+    {
+        GameObject[] playerCars = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject car in playerCars)
         {
-            _carController.OnDriftEvent += HandleDriftEvent;
+            var photonView = car.GetComponent<PhotonView>();
+            if (photonView != null && photonView.IsMine)
+            {
+                _carController = car.GetComponent<CarController>();
+                if (_carController != null)
+                {
+                    _carController.OnDriftEvent += HandleDriftEvent;
+                }
+                Debug.Log($"[GameUIManager] Found local CarController: {car.name}");
+                return;
+            }
         }
+        Debug.LogWarning("[GameUIManager] Local player car not found!");
     }
 
     private void Update()
     {
-        if (!_levelOver)
+        if (_levelOver)
         {
-            // Считаем таймер
-            _timeLeft -= Time.deltaTime;
-            if (_timeLeft <= 0f)
-            {
-                _timeLeft = 0f;
-                EndLevel();
-            }
-
-            // Если машина дрифтует, прибавляем очки (можно по формуле)
-            if (_carController != null && _carController.IsDrifting)
-            {
-                // Пример: очки зависят от скорости
-                float speedFactor = _carController.CurrentSpeedKmh;
-                _driftPoints += speedFactor * 5f * Time.deltaTime;
-            }
+            CheckForDoubleReward();
+            return;
         }
 
-        // Обновляем UI:
+        _timeLeft -= Time.deltaTime;
+        if (_timeLeft <= 0f)
+        {
+            _timeLeft = 0f;
+            EndLevel();
+        }
+
+        if (_carController != null && _carController.IsDrifting)
+        {
+            float speedFactor = _carController.CurrentSpeedKmh;
+            _driftPoints += speedFactor * 5f * Time.deltaTime;
+        }
+
         UpdateHUD();
     }
 
@@ -65,78 +77,91 @@ public class GameUIManager : MonoBehaviour
     {
         if (started)
         {
-            Debug.Log("Дрифт начался!");
+            Debug.Log("[GameUIManager] Дрифт начался (локальный)!");
         }
         else
         {
-            Debug.Log($"Дрифт закончился! Длился {duration:F2} с");
+            Debug.Log($"[GameUIManager] Дрифт закончился! Длился {duration:F2} с");
         }
     }
 
     private void EndLevel()
     {
         _levelOver = true;
-        // Блокируем управление:
+
         if (_carController != null)
         {
             _carController.CanDrive = false;
         }
 
-        // Считаем награду
         _baseReward = Mathf.Floor(_driftPoints / 10f);
 
         if (rewardLabel != null)
         {
-            rewardLabel.text = 
+            rewardLabel.text =
                 $"Level Over!\n" +
                 $"Drift Points: {_driftPoints:0}\n" +
                 $"Reward: ${_baseReward}\n" +
-                "Press [D] to DOUBLE reward (simulated)";
+                "Press [D] to DOUBLE reward (watch ad)";
         }
     }
 
     private void UpdateHUD()
     {
-        // Таймер
         if (timerLabel != null)
         {
             timerLabel.text = $"Time: {_timeLeft:0.0}";
         }
 
-        // Скорость
         if (speedLabel != null && _carController != null)
         {
             speedLabel.text = $"Speed: {_carController.CurrentSpeedKmh:0.0} km/h";
         }
 
-        // Очки дрифта
         if (driftPointsLabel != null)
         {
             driftPointsLabel.text = $"Drift: {_driftPoints:0}";
         }
     }
 
-    private void LateUpdate()
+    private void CheckForDoubleReward()
     {
-        // Если уровень закончился, ждём нажатия клавиши D (для удвоения награды)
-        if (_levelOver && Input.GetKeyDown(KeyCode.D))
+        if (Input.GetKeyDown(KeyCode.D))
         {
-            // Показываем рекламу (пример)
-            // IronSource.Agent.showRewardedVideo();
-
-            // В реальном проекте нужно подписаться на колбэк onRewardedVideoAdRewardedEvent.
-            // Здесь же просто имитируем успех:
-            SimulateRewardedAdSuccess();
+            if (IronSource.Agent.isRewardedVideoAvailable())
+            {
+                Debug.Log("[GameUIManager] Showing Rewarded Ad...");
+                IronSource.Agent.showRewardedVideo();
+            }
+            else
+            {
+                Debug.Log("[GameUIManager] Rewarded Ad not available.");
+                if (rewardLabel != null)
+                {
+                    rewardLabel.text = $"No ads available to double reward.";
+                }
+            }
         }
     }
 
-    private void SimulateRewardedAdSuccess()
+    private void OnRewardedAdCompleted(IronSourcePlacement placement)
     {
-        float doubled = _baseReward * 2f;
+        float doubledReward = _baseReward * 2f;
         if (rewardLabel != null)
         {
-            rewardLabel.text = 
-                $"Reward AD success!\nBase = ${_baseReward}\nDoubled = ${doubled}";
+            rewardLabel.text =
+                $"Reward Doubled!\nBase = ${_baseReward}\nDoubled = ${doubledReward}";
         }
+        Debug.Log($"[GameUIManager] Rewarded Ad Completed. Reward: ${doubledReward}");
+    }
+
+    private void OnRewardedAdClosed()
+    {
+        Debug.Log("[GameUIManager] Rewarded Ad Closed.");
+    }
+
+    private void OnRewardedAdAvailabilityChanged(bool available)
+    {
+        Debug.Log($"[GameUIManager] Rewarded Ad Availability Changed: {available}");
     }
 }
