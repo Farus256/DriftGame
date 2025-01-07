@@ -1,19 +1,24 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Bootstrapper : MonoBehaviour
 {
-    private void Awake()
+    [SerializeField] private string sceneToLoad;
+    private void Start()
+    {
+        InitializeGame();
+    }
+
+    private void InitializeGame()
     {
         // 1) Загружаем машины
-        CarStats[] allCars = CarDataManager.LoadAllCarStats();
+        var allCars = CarDataManager.LoadAllCarStats();
         Debug.Log($"[Bootstrap] Cars loaded: {allCars.Length}");
 
         // 2) Загружаем игрока
-        PlayerStats playerStats = PlayerDataManager.LoadPlayerStats();
-        Debug.Log($"[Bootstrap] Player name = {playerStats.playerName}, money = {playerStats.money}");
+        var playerStats = PlayerDataManager.LoadPlayerStats();
+        Debug.Log($"[Bootstrap] Player name = {playerStats.GetName()}, money = {playerStats.GetMoney()}");
 
-        // Дальше переход в сцену Меню
-        SceneManager.LoadScene("MenuScene");
+        // 3) Переход на сцену через GlobalEventManager
+        GlobalEventManager.TriggerSceneChanged(sceneToLoad);
     }
 }

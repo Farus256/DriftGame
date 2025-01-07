@@ -94,12 +94,6 @@ public static class PlayerDataManager
 
     private static PlayerStats CreateDefaultPlayerStats()
     {
-        return new PlayerStats
-        {
-            playerName = "Player",
-            money = 1000.0f,
-            totalDriftPoints = 2500.5f,
-            level = 3
-        };
+        return new PlayerStats("Player", 1000.0f, 0);
     }
 }

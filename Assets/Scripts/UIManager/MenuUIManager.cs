@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -5,7 +6,16 @@ using UnityEngine.SceneManagement;
 public class MenuUIManager : MonoBehaviour
 {
     [SerializeField] private MenuCarSpawner menuCarSpawner;
+    [SerializeField] private TMP_Text moneyText;
+    
+    private void Start()
+    {
+        PlayerStats stats = PlayerDataManager.LoadPlayerStats();
 
+        moneyText.text = stats.GetMoney().ToString();
+
+    }
+    
     public void OnPlayButton()
     {
         CarStats chosenCar = menuCarSpawner.GetCurrentCarStats();
@@ -18,7 +28,7 @@ public class MenuUIManager : MonoBehaviour
         
         CarSelection.selectedCarId = chosenCar.id;
         
-        SceneManager.LoadScene("TestScene");
+        GlobalEventManager.TriggerLevelStart();
     }
 
     public void OnNextCarButton()
