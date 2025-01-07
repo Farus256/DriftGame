@@ -1,5 +1,4 @@
 using UnityEngine;
-using static IronSource;
 
 public class IronSourceInitializer : MonoBehaviour
 {
@@ -35,6 +34,12 @@ public class IronSourceInitializer : MonoBehaviour
             return;
         }
 
+#if UNITY_EDITOR
+        // В редакторе симулируем доступность рекламы
+        Debug.Log("[IronSourceInitializer] Simulating IronSource initialization in Unity Editor.");
+        isInitialized = true;
+#else
+        // Для реального устройства
         Debug.Log("[IronSourceInitializer] Initializing IronSource with AppKey: " + appKey);
 
         // Инициализация IronSource SDK
@@ -43,10 +48,15 @@ public class IronSourceInitializer : MonoBehaviour
 
         // Проверка доступности Rewarded Video
         CheckInitializationStatus();
+#endif
     }
 
     private void CheckInitializationStatus()
     {
+#if UNITY_EDITOR
+        Debug.Log("[IronSourceInitializer] Simulating rewarded video availability in Unity Editor.");
+        isInitialized = true;
+#else
         // Проверим, доступно ли Rewarded Video как индикатор успешной инициализации
         if (IronSource.Agent.isRewardedVideoAvailable())
         {
@@ -57,12 +67,15 @@ public class IronSourceInitializer : MonoBehaviour
         {
             Debug.LogWarning("[IronSourceInitializer] IronSource initialization in progress or failed. Rewarded Video not available.");
         }
+#endif
     }
 
     private void OnApplicationPause(bool isPaused)
     {
+#if !UNITY_EDITOR
         // Уведомляем IronSource о состоянии приложения
         IronSource.Agent.onApplicationPause(isPaused);
+#endif
     }
 
     private void Update()
@@ -72,6 +85,31 @@ public class IronSourceInitializer : MonoBehaviour
         {
             CheckInitializationStatus();
         }
+    }
+
+    public void ShowRewardedVideo()
+    {
+#if UNITY_EDITOR
+        Debug.Log("[IronSourceInitializer] Simulating Rewarded Ad in Unity Editor.");
+        SimulateRewardedAd();
+#else
+        if (IronSource.Agent.isRewardedVideoAvailable())
+        {
+            Debug.Log("[IronSourceInitializer] Showing Rewarded Video...");
+            IronSource.Agent.showRewardedVideo();
+        }
+        else
+        {
+            Debug.LogWarning("[IronSourceInitializer] Rewarded Video is not available.");
+        }
+#endif
+    }
+
+    private void SimulateRewardedAd()
+    {
+        // Симулируем события Rewarded Ad в редакторе
+        Debug.Log("Simulating Rewarded Ad Completion...");
+        
     }
 
     private void OnDestroy()

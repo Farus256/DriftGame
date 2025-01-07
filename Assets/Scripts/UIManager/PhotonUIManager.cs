@@ -21,8 +21,10 @@ public class PhotonUIManager : MonoBehaviourPunCallbacks
     [SerializeField] private Transform roomListContainer;      // Контейнер (LayoutGroup) для списка комнат
     [SerializeField] private RoomListItem roomListItemPrefab;  // Префаб UI-элемента для комнаты
     [SerializeField] private Button startGameButton;           // Кнопка "Start Game" (можем активировать по необходимости)
-
+    
     [SerializeField] private GameObject multiplayerPanel;
+    
+    [SerializeField] private MenuCarSpawner menuCarSpawner;
     
     // Храним список комнат в кэше
     private List<RoomInfo> cachedRoomList = new List<RoomInfo>();
@@ -30,16 +32,15 @@ public class PhotonUIManager : MonoBehaviourPunCallbacks
 
     public void OnMultiplayerButtonPressed()
     {
-        ShowMultiplayerMenu();
-        //Connect();
+        CarStats chosenCar = menuCarSpawner.GetCurrentCarStats();
+        CarSelection.selectedCarId = chosenCar.id;
+        ConnectToPhoton();
     }
-
-    private void ShowMultiplayerMenu()
+    
+    private void ConnectToPhoton()
     {
         multiplayerPanel.SetActive(true);
-    }
-    private void Start()
-    {
+        
         statusText.text = "Connecting to Photon...";
         // Подключаемся к Photon Cloud (AppId & Region в PhotonServerSettings)
         PhotonNetwork.ConnectUsingSettings();

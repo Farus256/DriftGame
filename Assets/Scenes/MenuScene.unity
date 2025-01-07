@@ -5011,6 +5011,7 @@ MonoBehaviour:
     type: 3}
   startGameButton: {fileID: 1957129761}
   multiplayerPanel: {fileID: 1931724470}
+  menuCarSpawner: {fileID: 1393506583}
 --- !u!4 &2023149766
 Transform:
   m_ObjectHideFlags: 0

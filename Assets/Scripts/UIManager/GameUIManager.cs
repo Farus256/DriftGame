@@ -25,7 +25,7 @@ public class GameUIManager : MonoBehaviour
         _timeLeft = levelDuration;
         _driftPoints = 0f;
         _levelOver = false;
-
+        
         FindLocalPlayerCar();
     }
     
@@ -34,19 +34,38 @@ public class GameUIManager : MonoBehaviour
         GameObject[] playerCars = GameObject.FindGameObjectsWithTag("Player");
         foreach (GameObject car in playerCars)
         {
-            var photonView = car.GetComponent<PhotonView>();
-            if (photonView != null && photonView.IsMine)
+            // Если Photon используется (мультиплеер)
+            if (PhotonNetwork.IsConnectedAndReady)
             {
-                _carController = car.GetComponent<CarController>();
-                if (_carController != null)
+                var photonView = car.GetComponent<PhotonView>();
+                if (photonView != null && photonView.IsMine) // Только локальная машина
                 {
-                    _carController.OnDriftEvent += HandleDriftEvent;
+                    AssignCarController(car);
+                    return;
                 }
-                Debug.Log($"[GameUIManager] Found local CarController: {car.name}");
+            }
+            else // Если синглплеер
+            {
+                // В синглплеере просто берём первую найденную машину
+                AssignCarController(car);
                 return;
             }
         }
         Debug.LogWarning("[GameUIManager] Local player car not found!");
+    }
+    
+    private void AssignCarController(GameObject car)
+    {
+        _carController = car.GetComponent<CarController>();
+        if (_carController != null)
+        {
+            _carController.OnDriftEvent += HandleDriftEvent;
+            Debug.Log($"[GameUIManager] Found local CarController: {car.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"[GameUIManager] CarController not found on: {car.name}");
+        }
     }
 
     private void Update()
