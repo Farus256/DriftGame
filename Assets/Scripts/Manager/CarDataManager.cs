@@ -37,6 +37,7 @@ public static class CarDataManager
             return Array.Empty<CarStats>();
         }
     }
+
     // Метод для сохранения всех характеристик машин
     public static void SaveAllCarStats(CarStats[] cars)
     {
@@ -56,9 +57,10 @@ public static class CarDataManager
             Debug.LogError($"[CarDataManager] Save error: {e}");
         }
     }
+
     private static void CreateDefaultCarFile(string path)
     {
-        // Минимальный дефолтный JSON
+        // Дефолтный JSON с дополнительными деталями и цветом покраски
         string defaultJson = @"{
     ""cars"": [
         {
@@ -67,7 +69,10 @@ public static class CarDataManager
             ""mass"": 1000,
             ""motorPower"": 2000,
             ""brakeForce"": 2500,
-            ""prefabName"": ""Samurai_Green_A""
+            ""prefabName"": ""Samurai_Green_A"",
+            ""availableExtraParts"": [""Spoiler"", ""SideSkirts""],
+            ""activeExtraParts"": [],
+            ""paintColor"": ""#FFFFFF""
         },
         {
             ""id"": 2,
@@ -75,10 +80,14 @@ public static class CarDataManager
             ""mass"": 1200,
             ""motorPower"": 1600,
             ""brakeForce"": 2000,
-            ""prefabName"": ""Samurai_Blue_A""
+            ""prefabName"": ""Samurai_Blue_A"",
+            ""availableExtraParts"": [""Spoiler"", ""SideSkirts""],
+            ""activeExtraParts"": [],
+            ""paintColor"": ""#FFFFFF""
         }
     ]
 }";
+
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
@@ -91,4 +100,3 @@ public static class CarDataManager
         }
     }
 }
-

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class CarStats
@@ -20,7 +21,20 @@ public class CarStats
 
     [SerializeField] private string prefabName;
     public string PrefabName => prefabName;
-    
+
+    // Список доступных дополнительных деталей
+    [SerializeField] private List<string> availableExtraParts;
+    public List<string> AvailableExtraParts => availableExtraParts;
+
+    // Список активных дополнительных деталей
+    [SerializeField] private List<string> activeExtraParts;
+    public List<string> ActiveExtraParts => activeExtraParts;
+
+    // Цвет покраски в формате HEX
+    [SerializeField] private string paintColor; // Пример: "#FFFFFF" для белого
+    public string PaintColor => paintColor;
+
+    // Методы для улучшения характеристик
     public void UpgradeMotorPower(float amount)
     {
         motorPower += amount;
@@ -31,5 +45,22 @@ public class CarStats
     {
         brakeForce += amount;
         Debug.Log($"[CarStats] Brake Force upgraded by {amount}. New Brake Force: {brakeForce}");
+    }
+
+    // Методы для активации дополнительных деталей
+    public void ActivateExtraPart(string partName)
+    {
+        if (!activeExtraParts.Contains(partName) && availableExtraParts.Contains(partName))
+        {
+            activeExtraParts.Add(partName);
+            Debug.Log($"[CarStats] Activated extra part: {partName}");
+        }
+    }
+
+    // Метод для установки цвета покраски
+    public void SetPaintColor(string colorHex)
+    {
+        paintColor = colorHex;
+        Debug.Log($"[CarStats] Paint color set to: {paintColor}");
     }
 }

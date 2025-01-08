@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -12,10 +13,10 @@ public class MenuCarSpawner : MonoBehaviour
 
     private void Awake()
     {
-        // 1) Загружаем массив машин из JSON через CarDataManager
+        // Загружаем массив машин из JSON через CarDataManager
         _allCars = CarDataManager.LoadAllCarStats();
 
-        // 2) Начинаем с 0-й машины (если массив пуст — ShowCar не покажет ничего)
+        // Начинаем с 0-й машины
         _currentCarIndex = 0;
         ShowCar(_currentCarIndex);
     }
@@ -68,6 +69,14 @@ public class MenuCarSpawner : MonoBehaviour
     }
 
     /// <summary>
+    /// Получить экземпляр текущей машины
+    /// </summary>
+    public GameObject GetCurrentCarInstance()
+    {
+        return _currentCarInstance;
+    }
+
+    /// <summary>
     /// Отобразить машину по индексу (удаляет предыдущую)
     /// </summary>
     private void ShowCar(int index)
@@ -97,6 +106,12 @@ public class MenuCarSpawner : MonoBehaviour
         if (!spawnPoint) spawnPoint = transform;
         _currentCarInstance = Instantiate(carPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
 
+        // Применяем покраску
+        ApplyPaintColor(_currentCarInstance, stats.PaintColor);
+
+        // Активируем дополнительные детали
+        ActivateExtraParts(_currentCarInstance, stats.ActiveExtraParts);
+
         // Если хотим физику в меню — задаём массу:
         Rigidbody rb = _currentCarInstance.GetComponent<Rigidbody>();
         if (rb != null)
@@ -105,5 +120,49 @@ public class MenuCarSpawner : MonoBehaviour
         }
 
         Debug.Log($"[MenuCarSpawner] Showing car: {stats.CarName} (ID={stats.ID}), index={index}");
+    }
+
+    /// <summary>
+    /// Применяет цвет покраски к машине
+    /// </summary>
+    private void ApplyPaintColor(GameObject carInstance, string colorHex)
+    {
+        Renderer[] renderers = carInstance.GetComponentsInChildren<Renderer>();
+        Color newColor;
+        if (ColorUtility.TryParseHtmlString(colorHex, out newColor))
+        {
+            foreach (Renderer renderer in renderers)
+            {
+                foreach (Material mat in renderer.materials)
+                {
+                    mat.color = newColor;
+                }
+            }
+            Debug.Log($"[MenuCarSpawner] Applied color {colorHex} to car.");
+        }
+        else
+        {
+            Debug.LogError($"[MenuCarSpawner] Invalid color code: {colorHex}");
+        }
+    }
+
+    /// <summary>
+    /// Активирует дополнительные детали на машине
+    /// </summary>
+    private void ActivateExtraParts(GameObject carInstance, List<string> activeParts)
+    {
+        foreach (string partName in activeParts)
+        {
+            Transform partTransform = carInstance.transform.Find(partName);
+            if (partTransform != null)
+            {
+                partTransform.gameObject.SetActive(true);
+                Debug.Log($"[MenuCarSpawner] Activated part: {partName}");
+            }
+            else
+            {
+                Debug.LogWarning($"[MenuCarSpawner] Part not found: {partName}");
+            }
+        }
     }
 }
