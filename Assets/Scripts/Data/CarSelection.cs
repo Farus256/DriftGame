@@ -1,4 +1,4 @@
 public static class CarSelection
 {
-    public static int selectedCarId = -1;
+    public static int SelectedCarId { get; set; } = -1;
 }

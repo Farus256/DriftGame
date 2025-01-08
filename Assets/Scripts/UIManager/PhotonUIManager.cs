@@ -33,7 +33,7 @@ public class PhotonUIManager : MonoBehaviourPunCallbacks
     public void OnMultiplayerButtonPressed()
     {
         CarStats chosenCar = menuCarSpawner.GetCurrentCarStats();
-        CarSelection.selectedCarId = chosenCar.id;
+        CarSelection.SelectedCarId = chosenCar.ID;
         ConnectToPhoton();
     }
     

@@ -3,9 +3,6 @@ using UnityEngine;
 
 public class MenuCarSpawner : MonoBehaviour
 {
-    [Header("UI Elements")]
-    [SerializeField] private TMP_Text carNameLabel;
-
     [Header("Spawn Settings")]
     [SerializeField] private Transform spawnPoint;
 
@@ -13,7 +10,7 @@ public class MenuCarSpawner : MonoBehaviour
     private int _currentCarIndex;    // Текущий индекс в массиве
     private GameObject _currentCarInstance;
 
-    private void Start()
+    private void Awake()
     {
         // 1) Загружаем массив машин из JSON через CarDataManager
         _allCars = CarDataManager.LoadAllCarStats();
@@ -54,12 +51,20 @@ public class MenuCarSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Получить CarStats текущей машины (если нужно в другом скрипте)
+    /// Получить CarStats текущей машины
     /// </summary>
     public CarStats GetCurrentCarStats()
     {
         if (_allCars == null || _allCars.Length == 0) return null;
         return _allCars[_currentCarIndex];
+    }
+
+    /// <summary>
+    /// Получить все CarStats
+    /// </summary>
+    public CarStats[] GetAllCarStats()
+    {
+        return _allCars;
     }
 
     /// <summary>
@@ -80,11 +85,11 @@ public class MenuCarSpawner : MonoBehaviour
         CarStats stats = _allCars[index];
 
         // Загружаем префаб из папки Resources/CarPrefabs/<prefabName>.prefab
-        string prefabPath = $"CarPrefabs/{stats.prefabName}";
+        string prefabPath = $"CarPrefabs/{stats.PrefabName}";
         GameObject carPrefab = Resources.Load<GameObject>(prefabPath);
         if (carPrefab == null)
         {
-            Debug.LogError($"[CarInitializer] Prefab not found in Resources: {prefabPath}");
+            Debug.LogError($"[MenuCarSpawner] Prefab not found in Resources: {prefabPath}");
             return;
         }
 
@@ -92,37 +97,13 @@ public class MenuCarSpawner : MonoBehaviour
         if (!spawnPoint) spawnPoint = transform;
         _currentCarInstance = Instantiate(carPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
 
-        // Пишем название машины (и/или id) в UI
-        if (carNameLabel != null)
-        {
-            // Дополнительно можно выводить id: $"{stats.carName} (ID={stats.id})"
-            carNameLabel.text = stats.carName;
-        }
-
         // Если хотим физику в меню — задаём массу:
         Rigidbody rb = _currentCarInstance.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.mass = stats.mass;
+            rb.mass = stats.Mass;
         }
 
-        Debug.Log($"[CarInitializer] Showing car: {stats.carName} (ID={stats.id}), index={index}");
-    }
-    
-    public void ShowCarById(int givenId)
-    {
-        if (_allCars == null) return;
-
-        for (int i = 0; i < _allCars.Length; i++)
-        {
-            if (_allCars[i].id == givenId)
-            {
-                _currentCarIndex = i;
-                ShowCar(_currentCarIndex);
-                return;
-            }
-        }
-
-        Debug.LogWarning($"[CarInitializer] Car with ID={givenId} not found!");
+        Debug.Log($"[MenuCarSpawner] Showing car: {stats.CarName} (ID={stats.ID}), index={index}");
     }
 }

@@ -14,7 +14,7 @@ public class GameCarSpawner : MonoBehaviour
     private void InitializePlayerCar()
     {
         // 1) Проверим, что в CarSelection что-то выбрано
-        if (CarSelection.selectedCarId < 0)
+        if (CarSelection.SelectedCarId < 0)
         {
             Debug.LogWarning("[GameSceneManager] No car was selected. Using default or just skipping...");
             return;
@@ -26,7 +26,7 @@ public class GameCarSpawner : MonoBehaviour
         CarStats selectedCar = null;
         for (int i = 0; i < allCars.Length; i++)
         {
-            if (allCars[i].id == CarSelection.selectedCarId)
+            if (allCars[i].ID == CarSelection.SelectedCarId)
             {
                 selectedCar = allCars[i];
                 break;
@@ -35,12 +35,12 @@ public class GameCarSpawner : MonoBehaviour
 
         if (selectedCar == null)
         {
-            Debug.LogError($"[GameSceneManager] Car with ID={CarSelection.selectedCarId} not found in data!");
+            Debug.LogError($"[GameSceneManager] Car with ID={CarSelection.SelectedCarId} not found in data!");
             return;
         }
 
         // 3) Загружаем префаб по имени (prefabName) из Resources/CarPrefabs/
-        string prefabPath = $"CarPrefabs/{selectedCar.prefabName}";
+        string prefabPath = $"CarPrefabs/{selectedCar.PrefabName}";
         GameObject prefab = Resources.Load<GameObject>(prefabPath);
         if (prefab == null)
         {
@@ -55,17 +55,17 @@ public class GameCarSpawner : MonoBehaviour
         CarController controller = playerCar.GetComponent<CarController>();
         if (controller != null)
         {
-            controller.motorPower = selectedCar.motorPower;
-            controller.brakeForce = selectedCar.brakeForce;
+            controller.motorPower = selectedCar.MotorPower;
+            controller.brakeForce = selectedCar.BrakeForce;
         }
 
         // Или настраиваем Rigidbody
         Rigidbody rb = playerCar.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.mass = selectedCar.mass;
+            rb.mass = selectedCar.Mass;
         }
 
-        Debug.Log($"[GameSceneManager] Spawned car '{selectedCar.carName}' with ID={selectedCar.id}");
+        Debug.Log($"[GameSceneManager] Spawned car '{selectedCar.CarName}' with ID={selectedCar.ID}");
     }
 }

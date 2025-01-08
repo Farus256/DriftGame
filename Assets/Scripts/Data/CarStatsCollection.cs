@@ -1,7 +1,15 @@
-using System;
+using UnityEngine;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class CarStatsCollection
 {
-    public CarStats[] cars;
+    [SerializeField] private CarStats[] cars;
+    public CarStats[] Cars => cars;
+
+    // Метод для установки массива машин
+    public void SetCars(CarStats[] newCars)
+    {
+        cars = newCars;
+    }
 }

@@ -16,7 +16,7 @@ public class Bootstrapper : MonoBehaviour
 
         // 2) Загружаем игрока
         var playerStats = PlayerDataManager.LoadPlayerStats();
-        Debug.Log($"[Bootstrap] Player name = {playerStats.GetName()}, money = {playerStats.GetMoney()}");
+        Debug.Log($"[Bootstrap] Player name = {playerStats.PlayerName}, money = {playerStats.Money}");
 
         // 3) Переход на сцену через GlobalEventManager
         GlobalEventManager.TriggerSceneChanged(sceneToLoad);

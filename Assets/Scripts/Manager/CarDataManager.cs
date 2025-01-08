@@ -20,10 +20,10 @@ public static class CarDataManager
         {
             string json = File.ReadAllText(path);
             CarStatsCollection collection = JsonUtility.FromJson<CarStatsCollection>(json);
-            if (collection != null && collection.cars != null)
+            if (collection != null && collection.Cars != null)
             {
-                Debug.Log($"[CarDataManager] Loaded {collection.cars.Length} cars from {path}");
-                return collection.cars;
+                Debug.Log($"[CarDataManager] Loaded {collection.Cars.Length} cars from {path}");
+                return collection.Cars;
             }
             else
             {
@@ -37,7 +37,25 @@ public static class CarDataManager
             return Array.Empty<CarStats>();
         }
     }
+    // Метод для сохранения всех характеристик машин
+    public static void SaveAllCarStats(CarStats[] cars)
+    {
+        CarStatsCollection collection = new CarStatsCollection();
+        collection.SetCars(cars);
+        string json = JsonUtility.ToJson(collection, true);
+        string path = Path.Combine(Application.persistentDataPath, FileName);
 
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
+            File.WriteAllText(path, json);
+            Debug.Log($"[CarDataManager] Saved {cars.Length} cars to {path}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[CarDataManager] Save error: {e}");
+        }
+    }
     private static void CreateDefaultCarFile(string path)
     {
         // Минимальный дефолтный JSON

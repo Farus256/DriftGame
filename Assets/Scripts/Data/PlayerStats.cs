@@ -1,35 +1,48 @@
+using UnityEngine;
+
 [System.Serializable]
 public class PlayerStats
 {
-    private string _playerName;
-    private float _money;
-    private float _totalDriftPoints;
-    private int _level;
-    // public int selectedCarIndex;
-    // public int totalWins;
+    [SerializeField] private string playerName;
+    public string PlayerName => playerName;
+
+    [SerializeField] private float money;
+    public float Money => money;
+
+    [SerializeField] private float totalDriftPoints;
+    public float TotalDriftPoints => totalDriftPoints;
+
+    [SerializeField] private int level;
+    public int Level => level;
+    
+    // Если нужны дополнительные поля, раскомментируйте и добавьте их с [SerializeField]
+    // [SerializeField]
+    // private int selectedCarIndex;
+    // public int SelectedCarIndex => selectedCarIndex;
+
+    // [SerializeField]
+    // private int totalWins;
+    // public int TotalWins => totalWins;
+
+    // Пустой конструктор для десериализации
+    public PlayerStats() { }
+
+    // Конструктор для инициализации
     public PlayerStats(string playerName, float initialMoney, int initialLevel)
     {
-        _playerName = playerName;
-        _money = initialMoney;
-        _level = initialLevel;
-        _totalDriftPoints = 0; // Начальные очки дрифта равны нулю
+        this.playerName = playerName;
+        this.money = initialMoney;
+        this.totalDriftPoints = 0f; // Начальные очки дрифта равны нулю
+        this.level = initialLevel;
     }
     
-    public float GetMoney()
-    {
-        return _money;
-    }
     public void AddMoney(float amount)
     {
-        _money += amount;
+        money += amount;
     }
+    
     public void AddDriftPoints(float amount)
     {
-        _totalDriftPoints += amount;
-    }
-
-    public string GetName()
-    {
-        return _playerName;
+        totalDriftPoints += amount;
     }
 }

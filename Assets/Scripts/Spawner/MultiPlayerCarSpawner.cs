@@ -24,7 +24,7 @@ public class MultiPlayerCarSpawner : MonoBehaviour
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
 
         // Убедимся, что выбранная машина корректна
-        if (CarSelection.selectedCarId < 0)
+        if (CarSelection.SelectedCarId < 0)
         {
             Debug.LogWarning("[MultiPlayerCarSpawner] No car selected. Using default...");
             return;
@@ -36,7 +36,7 @@ public class MultiPlayerCarSpawner : MonoBehaviour
 
         foreach (CarStats car in allCars)
         {
-            if (car.id == CarSelection.selectedCarId)
+            if (car.ID == CarSelection.SelectedCarId)
             {
                 selectedCar = car;
                 break;
@@ -45,12 +45,12 @@ public class MultiPlayerCarSpawner : MonoBehaviour
 
         if (selectedCar == null)
         {
-            Debug.LogError($"[MultiPlayerCarSpawner] Car with ID={CarSelection.selectedCarId} not found in data!");
+            Debug.LogError($"[MultiPlayerCarSpawner] Car with ID={CarSelection.SelectedCarId} not found in data!");
             return;
         }
 
         // Спавним машину через PhotonNetwork.Instantiate, указывая путь с "CarPrefabs/"
-        string prefabPath = $"CarPrefabs/{selectedCar.prefabName}"; // Путь относительно Resources
+        string prefabPath = $"CarPrefabs/{selectedCar.PrefabName}"; // Путь относительно Resources
         GameObject playerCar = PhotonNetwork.Instantiate(
             prefabPath,
             spawnPoint.position,
@@ -76,10 +76,10 @@ public class MultiPlayerCarSpawner : MonoBehaviour
         var rb = playerCar.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.mass = selectedCar.mass;
+            rb.mass = selectedCar.Mass;
         }
 
-        Debug.Log($"[MultiPlayerCarSpawner] Spawned car '{selectedCar.carName}' at {spawnPoint.position}");
+        Debug.Log($"[MultiPlayerCarSpawner] Spawned car '{selectedCar.CarName}' at {spawnPoint.position}");
     }
 
 }

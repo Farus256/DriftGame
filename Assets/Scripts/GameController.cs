@@ -111,7 +111,7 @@ public class GameController : MonoBehaviour
         
         LocalPlayerCar.CanDrive = false;
         OnLevelEnd?.Invoke();
-        GlobalEventManager.TriggerLevelEnd();
+        
     }
 
     private void CheckForDoubleReward()
@@ -144,6 +144,8 @@ public class GameController : MonoBehaviour
         // Сохраняем обновлённые данные
         PlayerDataManager.SavePlayerStats(stats);
 
-        Debug.Log($"[GameController] Player money updated: +${reward}. Total: ${stats.GetMoney()}");
+        Debug.Log($"[GameController] Player money updated: +${reward}. Total: ${stats.Money}");
+        
+        GlobalEventManager.TriggerLevelEnd();
     }
 }

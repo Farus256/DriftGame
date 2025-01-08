@@ -2,46 +2,48 @@ using System;
 using System.IO;
 using UnityEngine;
 
-/// <summary>
-/// Менеджер для чтения и записи player_stats.json.
-/// Если файла нет – создаём дефолтный.
-/// Подходит для динамических данных игрока (деньги, уровень...).
-/// </summary>
+[System.Serializable]
+public class PlayerStatsCollection
+{
+    [SerializeField]
+    private PlayerStats playerStats;
+    public PlayerStats PlayerStats => playerStats;
+
+    public void SetPlayerStats(PlayerStats stats)
+    {
+        playerStats = stats;
+    }
+}
+
 public static class PlayerDataManager
 {
-    private const string FileName = "player_stats.json";
+    private const string FileName = "player_data.json";
 
-    private static string GetFilePath()
-    {
-        return Path.Combine(Application.persistentDataPath, FileName);
-    }
-
-    /// <summary>
-    /// Загружаем PlayerStats. Если файла нет, создаём дефолт и возвращаем его.
-    /// </summary>
     public static PlayerStats LoadPlayerStats()
     {
-        string path = GetFilePath();
+        string path = Path.Combine(Application.persistentDataPath, FileName);
 
         if (!File.Exists(path))
         {
-            Debug.LogWarning($"[PlayerDataManager] File not found at {path}, creating default...");
+            Debug.LogWarning($"[PlayerDataManager] File not found: {path}, creating default...");
             CreateDefaultPlayerFile(path);
         }
 
         try
         {
             string json = File.ReadAllText(path);
-            PlayerStats loadedStats = JsonUtility.FromJson<PlayerStats>(json);
-
-            if (loadedStats == null)
+            Debug.Log($"[PlayerDataManager] Loaded JSON: {json}"); // Для отладки
+            PlayerStatsCollection collection = JsonUtility.FromJson<PlayerStatsCollection>(json);
+            if (collection != null && collection.PlayerStats != null)
             {
-                Debug.LogWarning("[PlayerDataManager] JSON parsed but returned null. Using default stats.");
-                loadedStats = CreateDefaultPlayerStats();
+                Debug.Log($"[PlayerDataManager] Loaded player stats from {path}");
+                return collection.PlayerStats;
             }
-
-            Debug.Log($"[PlayerDataManager] Loaded player_stats.json from {path}");
-            return loadedStats;
+            else
+            {
+                Debug.LogWarning("[PlayerDataManager] JSON parsed but playerStats is null. Returning default stats.");
+                return CreateDefaultPlayerStats();
+            }
         }
         catch (Exception e)
         {
@@ -50,50 +52,33 @@ public static class PlayerDataManager
         }
     }
 
-    /// <summary>
-    /// Сохраняем текущее состояние PlayerStats (например, после изменения денег).
-    /// </summary>
     public static void SavePlayerStats(PlayerStats stats)
     {
-        string path = GetFilePath();
+        string path = Path.Combine(Application.persistentDataPath, FileName);
+        PlayerStatsCollection collection = new PlayerStatsCollection();
+        collection.SetPlayerStats(stats);
+        string json = JsonUtility.ToJson(collection, true);
         try
         {
-            string json = JsonUtility.ToJson(stats, true);
-
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
             File.WriteAllText(path, json);
-
-            Debug.Log($"[PlayerDataManager] Saved player_stats.json to {path}");
+            Debug.Log($"[PlayerDataManager] Saved player stats to {path}");
         }
         catch (Exception e)
         {
-            Debug.LogError($"[PlayerDataManager] Save error: {e}");
+            Debug.LogError($"[PlayerDataManager] Could not save player stats: {e}");
         }
     }
 
-    //--------------------------------------------------------------------------
-    // Вспомогательные методы
-    //--------------------------------------------------------------------------
-
     private static void CreateDefaultPlayerFile(string path)
     {
-        PlayerStats def = CreateDefaultPlayerStats();
-        string json = JsonUtility.ToJson(def, true);
-
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
-            File.WriteAllText(path, json);
-            Debug.Log($"[PlayerDataManager] Created default player_stats.json at {path}");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[PlayerDataManager] Could not create default file: {e}");
-        }
+        PlayerStats defaultStats = CreateDefaultPlayerStats();
+        SavePlayerStats(defaultStats);
+        Debug.Log($"[PlayerDataManager] Created default {FileName} at {path}");
     }
 
     private static PlayerStats CreateDefaultPlayerStats()
     {
-        return new PlayerStats("Player", 1000.0f, 0);
+        return new PlayerStats("DefaultPlayer", 1000f, 1);
     }
 }
