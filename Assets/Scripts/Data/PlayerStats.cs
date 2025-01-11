@@ -16,7 +16,6 @@ public class PlayerStats
     [SerializeField] private int level;
     public int Level => level;
 
-    // Новое поле: список купленных машин
     [SerializeField] private List<int> purchasedCars = new List<int>();
     public List<int> PurchasedCars => purchasedCars;
 
@@ -26,9 +25,9 @@ public class PlayerStats
     {
         this.playerName = playerName;
         this.money = initialMoney;
-        this.totalDriftPoints = 0f;
-        this.level = initialLevel;
-        this.purchasedCars = new List<int>();
+        totalDriftPoints = 0f;
+        level = initialLevel;
+        purchasedCars = new List<int>();
     }
 
     public void AddMoney(float amount)
@@ -41,7 +40,6 @@ public class PlayerStats
         totalDriftPoints += amount;
     }
 
-    // Методы для покупок
     public bool IsCarPurchased(int carId)
     {
         return purchasedCars.Contains(carId);

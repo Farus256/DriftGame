@@ -1,5 +1,3 @@
-// CarSelection.cs
-
 using UnityEngine;
 
 public static class CarSelection
@@ -9,6 +7,6 @@ public static class CarSelection
     public static void SelectCar(int carId)
     {
         SelectedCarId = carId;
-        Debug.Log($"[CarSelection] SelectedCarId set to {SelectedCarId}");
+        Debug.Log($"[CarSelection] SelectedCarId = {SelectedCarId}");
     }
 }

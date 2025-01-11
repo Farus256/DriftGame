@@ -1,6 +1,6 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine.UI;
 using Photon.Realtime;
 
 public class RoomListItem : MonoBehaviour
@@ -8,25 +8,21 @@ public class RoomListItem : MonoBehaviour
     [SerializeField] private TMP_Text roomNameText;
     [SerializeField] private Button joinButton;
 
-    private RoomInfo _roomInfo;
-    private PhotonUIManager _launcher;
+    private RoomInfo roomInfo;
+    private PhotonUIManager launcher;
 
-    public void SetRoomInfo(RoomInfo info, PhotonUIManager launcher)
+    public void SetRoomInfo(RoomInfo info, PhotonUIManager manager)
     {
-        _roomInfo = info;
-        _launcher = launcher;
-
-        // Пример текста: "MyRoom (1/2)"
-        roomNameText.text = $"{_roomInfo.Name} ({_roomInfo.PlayerCount}/{_roomInfo.MaxPlayers})";
-
+        roomInfo = info;
+        launcher = manager;
+        roomNameText.text = $"{roomInfo.Name} ({roomInfo.PlayerCount}/{roomInfo.MaxPlayers})";
         joinButton.onClick.RemoveAllListeners();
-        joinButton.onClick.AddListener(() => OnJoinButtonClicked());
+        joinButton.onClick.AddListener(OnJoinButtonClicked);
     }
 
     private void OnJoinButtonClicked()
     {
-        if (_roomInfo == null) return;
-        // Вызов метода из LauncherUI
-        _launcher.JoinRoomByName(_roomInfo.Name);
+        if (roomInfo == null) return;
+        launcher.JoinRoomByName(roomInfo.Name);
     }
 }

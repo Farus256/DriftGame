@@ -3,61 +3,55 @@ using TMPro;
 
 public class GameUIManager : MonoBehaviour
 {
-    [Header("References")]
+    public static GameUIManager Instance { get; private set; }
+    
     public TMP_Text speedLabel;
     public TMP_Text driftPointsLabel;
     public TMP_Text timerLabel;
     public TMP_Text rewardLabel;
 
-    private GameController _gameController;
+    private GameController gameController;
 
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+    
     private void Start()
     {
-        _gameController = GameController.Instance;
-        if (_gameController != null)
-        {
-            _gameController.OnLevelEnd += UpdateRewardLabel;
-        }
+        gameController = GameController.Instance;
+        if (gameController != null)
+            gameController.OnLevelEnd += UpdateRewardLabel;
     }
 
     private void Update()
     {
-        if (_gameController == null) return;
-
-        // Обновляем HUD
+        if (gameController == null) return;
         UpdateHUD();
     }
 
     private void UpdateHUD()
     {
-        // Таймер
-        if (timerLabel != null)
-        {
-            timerLabel.text = $"Time: {_gameController.GetTimeLeft():0.0}";
-        }
-
-        // Очки дрифта
-        if (driftPointsLabel != null)
-        {
-            driftPointsLabel.text = $"Drift: {_gameController.DriftPoints:0}";
-        }
-
-        // Скорость машины
-        if (speedLabel != null && _gameController.LocalPlayerCar != null)
-        {
-            speedLabel.text = $"Speed: {_gameController.LocalPlayerCar.CurrentSpeedKmh:0.0} km/h";
-        }
+        if (timerLabel)
+            timerLabel.text = $"Time: {gameController.GetTimeLeft():0.0}";
+        if (driftPointsLabel)
+            driftPointsLabel.text = $"Drift: {gameController.DriftPoints:0}";
+        if (speedLabel && gameController.LocalPlayerCar)
+            speedLabel.text = $"Speed: {gameController.LocalPlayerCar.CurrentSpeedKmh:0.0} km/h";
     }
 
     private void UpdateRewardLabel()
     {
-        if (rewardLabel != null)
-        {
-            rewardLabel.text =
-                $"Level Over!\n" +
-                $"Drift Points: {_gameController.DriftPoints:0}\n" +
-                $"Reward: ${_gameController.BaseReward}\n" +
-                "Press [D] to DOUBLE reward (watch ad)";
-        }
+        if (!rewardLabel) return;
+        rewardLabel.text = 
+            $"Level Over!\n" +
+            $"Drift Points: {gameController.DriftPoints:0}\n" +
+            $"Reward: ${gameController.BaseReward}\n" +
+            "Press [D] to DOUBLE reward (watch ad)";
     }
 }

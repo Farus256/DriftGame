@@ -22,42 +22,36 @@ public class CarStats
     [SerializeField] private string prefabName;
     public string PrefabName => prefabName;
 
-    // Список доступных дополнительных деталей
     [SerializeField] private List<string> availableExtraParts;
     public List<string> AvailableExtraParts => availableExtraParts;
 
-    // Список активных дополнительных деталей
     [SerializeField] private List<string> activeExtraParts;
     public List<string> ActiveExtraParts => activeExtraParts;
 
-    // Цвет покраски в формате HEX
-    [SerializeField] private string paintColor; // Пример: "#FFFFFF" для белого
+    [SerializeField] private string paintColor;
     public string PaintColor => paintColor;
 
-    // Новое поле - стоимость машины
     [SerializeField] private float cost;
     public float Cost => cost;
 
-    // Методы для улучшения характеристик
     public void UpgradeMotorPower(float amount)
     {
         motorPower += amount;
-        Debug.Log($"[CarStats] Motor Power upgraded by {amount}. New Motor Power: {motorPower}");
+        Debug.Log($"[CarStats] Motor Power +{amount} = {motorPower}");
     }
 
     public void UpgradeBrakeForce(float amount)
     {
         brakeForce += amount;
-        Debug.Log($"[CarStats] Brake Force upgraded by {amount}. New Brake Force: {brakeForce}");
+        Debug.Log($"[CarStats] Brake Force +{amount} = {brakeForce}");
     }
 
-    // Методы для активации и деактивации дополнительных деталей
     public void ActivateExtraPart(string partName)
     {
         if (!activeExtraParts.Contains(partName) && availableExtraParts.Contains(partName))
         {
             activeExtraParts.Add(partName);
-            Debug.Log($"[CarStats] Activated extra part: {partName}");
+            Debug.Log($"[CarStats] Activated part: {partName}");
         }
     }
 
@@ -66,14 +60,13 @@ public class CarStats
         if (activeExtraParts.Contains(partName))
         {
             activeExtraParts.Remove(partName);
-            Debug.Log($"[CarStats] Deactivated extra part: {partName}");
+            Debug.Log($"[CarStats] Deactivated part: {partName}");
         }
     }
 
-    // Метод для установки цвета покраски
     public void SetPaintColor(string colorHex)
     {
         paintColor = colorHex;
-        Debug.Log($"[CarStats] Paint color set to: {paintColor}");
+        Debug.Log($"[CarStats] Paint color = {paintColor}");
     }
 }

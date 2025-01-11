@@ -5,37 +5,29 @@ using UnityEngine;
 public static class CarDataManager
 {
     private const string FileName = "cars_data.json";
-    
-    // Внутренний кэш CarStats, чтобы не парсить файл постоянно
     private static CarStats[] _cachedCars;
 
     public static CarStats[] LoadAllCarStats()
     {
-        // Если у нас уже есть кэш, можно сразу вернуть
-        if (_cachedCars != null && _cachedCars.Length > 0)
-            return _cachedCars;
-
+        if (_cachedCars != null && _cachedCars.Length > 0) return _cachedCars;
         string path = Path.Combine(Application.persistentDataPath, FileName);
-
         if (!File.Exists(path))
         {
-            Debug.LogWarning($"[CarDataManager] File not found: {path}, creating default...");
+            Debug.LogWarning($"[CarDataManager] No file at {path}, creating default...");
             CreateDefaultCarFile(path);
         }
-
         try
         {
             string json = File.ReadAllText(path);
             CarStatsCollection collection = JsonUtility.FromJson<CarStatsCollection>(json);
             if (collection != null && collection.Cars != null)
             {
-                Debug.Log($"[CarDataManager] Loaded {collection.Cars.Length} cars from {path}");
                 _cachedCars = collection.Cars;
+                Debug.Log($"[CarDataManager] Loaded {_cachedCars.Length} cars");
                 return _cachedCars;
             }
             else
             {
-                Debug.LogWarning("[CarDataManager] JSON parsed but cars is null. Returning empty array.");
                 _cachedCars = Array.Empty<CarStats>();
                 return _cachedCars;
             }
@@ -48,17 +40,13 @@ public static class CarDataManager
         }
     }
 
-    // Метод для сохранения всех характеристик машин
     public static void SaveAllCarStats(CarStats[] cars)
     {
-        // Сохраняем в кэш
         _cachedCars = cars;
-        
         CarStatsCollection collection = new CarStatsCollection();
         collection.SetCars(cars);
         string json = JsonUtility.ToJson(collection, true);
         string path = Path.Combine(Application.persistentDataPath, FileName);
-
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
@@ -71,27 +59,18 @@ public static class CarDataManager
         }
     }
 
-    // Новый метод для получения CarStats по ID
     public static CarStats GetCarStatsById(int carId)
     {
-        // Загружаем все машины (или берём их из кэша)
         CarStats[] allCars = LoadAllCarStats();
-        
-        if (allCars == null || allCars.Length == 0)
-            return null;
-
-        // Перебираем и ищем нужный ID
+        if (allCars == null || allCars.Length == 0) return null;
         foreach (CarStats car in allCars)
-        {
             if (car.ID == carId)
                 return car;
-        }
         return null;
     }
 
     private static void CreateDefaultCarFile(string path)
     {
-        // Дефолтный JSON с дополнительными деталями, цветом покраски и ценой
         string defaultJson = @"{
     ""cars"": [
         {
@@ -124,7 +103,7 @@ public static class CarDataManager
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
             File.WriteAllText(path, defaultJson);
-            Debug.Log($"[CarDataManager] Created default {FileName} at {path}");
+            Debug.Log($"[CarDataManager] Created default file at {path}");
         }
         catch (Exception e)
         {
