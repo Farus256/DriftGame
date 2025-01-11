@@ -53,6 +53,11 @@ public class MenuUIManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (playerStats != null)
+        {
+            playerStats.OnMoneyChanged -= UpdateMoneyText;
+        }
+        
         if (upgradeMotorPowerButton)
             upgradeMotorPowerButton.onClick.RemoveListener(OnUpgradeMotorPower);
         if (upgradeBrakeForceButton)
@@ -76,8 +81,20 @@ public class MenuUIManager : MonoBehaviour
     private void LoadPlayerStats()
     {
         playerStats = PlayerDataManager.LoadPlayerStats();
+        if (playerStats != null)
+        {
+            playerStats.OnMoneyChanged += UpdateMoneyText;
+        }
     }
-
+    
+    public void UpdateMoneyText(float currentMoney)
+    {
+        if (moneyText != null)
+        {
+            moneyText.text = $"Money: ${currentMoney:F2}";
+        }
+    }
+    
     public void UpdateMoneyText()
     {
         if (playerStats != null) moneyText.text = $"Money: ${playerStats.Money:F2}";

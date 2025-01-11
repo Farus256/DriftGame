@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -19,8 +20,9 @@ public class PlayerStats
     [SerializeField] private List<int> purchasedCars = new List<int>();
     public List<int> PurchasedCars => purchasedCars;
 
+    public event Action<float> OnMoneyChanged;
     public PlayerStats() { }
-
+    
     public PlayerStats(string playerName, float initialMoney, int initialLevel)
     {
         this.playerName = playerName;
@@ -32,7 +34,9 @@ public class PlayerStats
 
     public void AddMoney(float amount)
     {
+        Debug.Log($"Adding money {amount}");
         money += amount;
+        OnMoneyChanged?.Invoke(Money);
     }
 
     public void AddDriftPoints(float amount)

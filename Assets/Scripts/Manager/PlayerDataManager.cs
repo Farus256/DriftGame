@@ -13,9 +13,13 @@ public class PlayerStatsCollection
 public static class PlayerDataManager
 {
     private const string FileName = "player_data.json";
+    private static PlayerStats cachedPlayerStats; // Кэшируемый экземпляр PlayerStats
 
     public static PlayerStats LoadPlayerStats()
     {
+        if (cachedPlayerStats != null)
+            return cachedPlayerStats; // Используем кэшированный экземпляр
+
         string path = Path.Combine(Application.persistentDataPath, FileName);
         if (!File.Exists(path))
         {
@@ -27,13 +31,16 @@ public static class PlayerDataManager
             string json = File.ReadAllText(path);
             PlayerStatsCollection collection = JsonUtility.FromJson<PlayerStatsCollection>(json);
             if (collection != null && collection.PlayerStats != null)
-                return collection.PlayerStats;
-            return CreateDefaultPlayerStats();
+            {
+                cachedPlayerStats = collection.PlayerStats;
+                return cachedPlayerStats;
+            }
+            return CreateAndCacheDefaultPlayerStats();
         }
         catch (Exception e)
         {
             Debug.LogError($"[PlayerDataManager] Load error: {e}");
-            return CreateDefaultPlayerStats();
+            return CreateAndCacheDefaultPlayerStats();
         }
     }
 
@@ -47,6 +54,9 @@ public static class PlayerDataManager
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
             File.WriteAllText(path, json);
+
+            // Обновляем кэшированную версию
+            cachedPlayerStats = stats;
         }
         catch (Exception e)
         {
@@ -56,12 +66,13 @@ public static class PlayerDataManager
 
     private static void CreateDefaultPlayerFile(string path)
     {
-        PlayerStats defaultStats = CreateDefaultPlayerStats();
+        PlayerStats defaultStats = CreateAndCacheDefaultPlayerStats();
         SavePlayerStats(defaultStats);
     }
 
-    private static PlayerStats CreateDefaultPlayerStats()
+    private static PlayerStats CreateAndCacheDefaultPlayerStats()
     {
-        return new PlayerStats("DefaultPlayer", 1000f, 1);
+        cachedPlayerStats = new PlayerStats("DefaultPlayer", 1000f, 1);
+        return cachedPlayerStats;
     }
 }

@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections.Generic;
 
 public class TuningUIManager : MonoBehaviour
 {
@@ -13,7 +12,6 @@ public class TuningUIManager : MonoBehaviour
     [SerializeField] private Button sideSkirtsButton;
     [SerializeField] private Button paintRedButton;
     [SerializeField] private Button paintBlueButton;
-    [SerializeField] private Button paintStandardButton;
     [SerializeField] private Button paintDefaultButton;
 
     [SerializeField] private float extraPartCost = 500f;
@@ -36,6 +34,10 @@ public class TuningUIManager : MonoBehaviour
     private void Start()
     {
         playerStats = PlayerDataManager.LoadPlayerStats();
+        if (playerStats != null)
+        {
+            playerStats.OnMoneyChanged += OnMoneyChanged;
+        }
         RefreshUI();
     }
 
@@ -47,10 +49,12 @@ public class TuningUIManager : MonoBehaviour
     private void OnDisable()
     {
         GlobalEventManager.onCarUpdated.RemoveListener(RefreshUI);
+        if (playerStats != null)
+        {
+            playerStats.OnMoneyChanged -= OnMoneyChanged;
+        }
     }
 
-    // Сделали метод публичным, чтобы MenuCarSpawner (или любой другой скрипт)
-    // мог вызвать RefreshUI() при переключении машины.
     public void RefreshUI()
     {
         playerStats = PlayerDataManager.LoadPlayerStats();
@@ -62,20 +66,18 @@ public class TuningUIManager : MonoBehaviour
         CarStats currentCar = CarDataManager.GetCarStatsById(selectedCarId);
         if (currentCar == null) return;
 
-        UpdateExtraPartButton(spoilerButton,    "Spoiler",    currentCar);
+        UpdateExtraPartButton(spoilerButton, "Spoiler", currentCar);
         UpdateExtraPartButton(sideSkirtsButton, "SideSkirts", currentCar);
 
-        UpdatePaintButton(paintRedButton,      "Red",      "#FF0000",     false, currentCar);
-        UpdatePaintButton(paintBlueButton,     "Blue",     "#0000FF",     false, currentCar);
-        UpdatePaintButton(paintStandardButton, "Standard", STANDARD_COLOR_HEX, true,  currentCar);
-        UpdatePaintButton(paintDefaultButton,  "Default",  DEFAULT_COLOR_HEX,  true,  currentCar);
+        UpdatePaintButton(paintRedButton, "Red", "#FF0000", false, currentCar);
+        UpdatePaintButton(paintBlueButton, "Blue", "#0000FF", false, currentCar);
+        UpdatePaintButton(paintDefaultButton, "Default", DEFAULT_COLOR_HEX, true, currentCar);
     }
 
     private void UpdateExtraPartButton(Button button, string partName, CarStats carStats)
     {
         if (!button) return;
 
-        // Если машина не куплена
         if (!playerStats.IsCarPurchased(carStats.ID))
         {
             button.interactable = false;
@@ -111,14 +113,9 @@ public class TuningUIManager : MonoBehaviour
         TMP_Text bt = button.GetComponentInChildren<TMP_Text>();
         if (bt)
         {
-            if (isFree)
-                bt.text = isApplied
-                    ? $"{colorName} (Applied)"
-                    : $"{colorName} (Free)";
-            else
-                bt.text = isApplied
-                    ? $"{colorName} (Applied)"
-                    : $"{colorName} (${paintCost})";
+            bt.text = isApplied
+                ? $"{colorName} (Applied)"
+                : isFree ? $"{colorName} (Free)" : $"{colorName} (${paintCost})";
         }
         button.interactable = !isApplied;
     }
@@ -152,9 +149,13 @@ public class TuningUIManager : MonoBehaviour
         else
         {
             if (playerStats.Money < extraPartCost) return;
+
             playerStats.AddMoney(-extraPartCost);
             PlayerDataManager.SavePlayerStats(playerStats);
-            menuUIManager.UpdateMoneyText();
+
+            // Обновляем отображение денег
+            MenuUIManager.Instance.UpdateMoneyText();
+
             carStats.ActivateExtraPart(partName);
             CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
         }
@@ -189,15 +190,20 @@ public class TuningUIManager : MonoBehaviour
 
         CarStats carStats = CarDataManager.GetCarStatsById(selectedCarId);
         if (carStats == null) return;
+
         if (!playerStats.IsCarPurchased(carStats.ID)) return;
+
         if (carStats.PaintColor == colorHex) return;
 
         if (!isFree)
         {
             if (playerStats.Money < paintCost) return;
+
             playerStats.AddMoney(-paintCost);
             PlayerDataManager.SavePlayerStats(playerStats);
-            menuUIManager.UpdateMoneyText();
+
+            // Обновляем отображение денег
+            MenuUIManager.Instance.UpdateMoneyText();
         }
 
         carStats.SetPaintColor(colorHex);
@@ -225,5 +231,10 @@ public class TuningUIManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void OnMoneyChanged(float currentMoney)
+    {
+        MenuUIManager.Instance.UpdateMoneyText(currentMoney);
     }
 }
