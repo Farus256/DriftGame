@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 public class MenuCarSpawner : MonoBehaviour
@@ -7,18 +6,36 @@ public class MenuCarSpawner : MonoBehaviour
     [Header("Spawn Settings")]
     [SerializeField] private Transform spawnPoint;
 
-    private CarStats[] _allCars;     // Список всех машин из JSON
-    private int _currentCarIndex;    // Текущий индекс в массиве
+    private CarStats[] _allCars;   // Список всех машин из JSON
+    private int _currentCarIndex;  // Текущий индекс в массиве
     private GameObject _currentCarInstance;
 
     private void Awake()
     {
+        Debug.Log("[MenuCarSpawner] Awake called.");
+
         // Загружаем массив машин из JSON через CarDataManager
         _allCars = CarDataManager.LoadAllCarStats();
-
+        Debug.Log($"[MenuCarSpawner] Loaded {_allCars.Length} cars.");
+    }
+    
+    private void Start()
+    {
         // Начинаем с 0-й машины
         _currentCarIndex = 0;
         ShowCar(_currentCarIndex);
+    }
+    
+    private void OnEnable()
+    {
+        // Подписка на событие обновления машины
+        GlobalEventManager.onCarUpdated.AddListener(RefreshCurrentCar);
+    }
+
+    private void OnDisable()
+    {
+        // Отписка от события
+        GlobalEventManager.onCarUpdated.RemoveListener(RefreshCurrentCar);
     }
 
     /// <summary>
@@ -27,7 +44,10 @@ public class MenuCarSpawner : MonoBehaviour
     public void ShowNextCar()
     {
         if (_allCars == null || _allCars.Length == 0)
+        {
+            Debug.LogWarning("[MenuCarSpawner] No cars to show.");
             return;
+        }
 
         _currentCarIndex++;
         if (_currentCarIndex >= _allCars.Length)
@@ -42,7 +62,10 @@ public class MenuCarSpawner : MonoBehaviour
     public void ShowPreviousCar()
     {
         if (_allCars == null || _allCars.Length == 0)
+        {
+            Debug.LogWarning("[MenuCarSpawner] No cars to show.");
             return;
+        }
 
         _currentCarIndex--;
         if (_currentCarIndex < 0)
@@ -52,7 +75,7 @@ public class MenuCarSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Получить CarStats текущей машины
+    /// Получить CarStats текущей машины (если нужно где-то ещё).
     /// </summary>
     public CarStats GetCurrentCarStats()
     {
@@ -61,7 +84,7 @@ public class MenuCarSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Получить все CarStats
+    /// Получить все CarStats (если нужно где-то ещё).
     /// </summary>
     public CarStats[] GetAllCarStats()
     {
@@ -81,17 +104,27 @@ public class MenuCarSpawner : MonoBehaviour
     /// </summary>
     private void ShowCar(int index)
     {
+        Debug.Log($"[MenuCarSpawner] Showing car at index: {index}");
+
         // Удаляем предыдущую машину (если есть)
         if (_currentCarInstance != null)
         {
             Destroy(_currentCarInstance);
+            _currentCarInstance = null;
         }
 
         // Защита от неверного индекса
         if (_allCars == null || index < 0 || index >= _allCars.Length)
+        {
+            Debug.LogError("[MenuCarSpawner] Invalid car index.");
             return;
+        }
 
         CarStats stats = _allCars[index];
+        Debug.Log($"[MenuCarSpawner] Loading car: {stats.CarName} (ID={stats.ID})");
+
+        // Устанавливаем текущий выбранный CarId через CarSelection
+        CarSelection.SelectCar(stats.ID);
 
         // Загружаем префаб из папки Resources/CarPrefabs/<prefabName>.prefab
         string prefabPath = $"CarPrefabs/{stats.PrefabName}";
@@ -102,9 +135,11 @@ public class MenuCarSpawner : MonoBehaviour
             return;
         }
 
-        // Спавним префаб в spawnPoint
+        // Спавним префаб
         if (!spawnPoint) spawnPoint = transform;
         _currentCarInstance = Instantiate(carPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
+
+        Debug.Log("[MenuCarSpawner] Car prefab instantiated.");
 
         // Применяем покраску
         ApplyPaintColor(_currentCarInstance, stats.PaintColor);
@@ -117,9 +152,20 @@ public class MenuCarSpawner : MonoBehaviour
         if (rb != null)
         {
             rb.mass = stats.Mass;
+            Debug.Log($"[MenuCarSpawner] Set Rigidbody mass to {stats.Mass}");
         }
 
         Debug.Log($"[MenuCarSpawner] Showing car: {stats.CarName} (ID={stats.ID}), index={index}");
+    }
+
+    /// <summary>
+    /// Обработчик события "машина обновилась"
+    /// </summary>
+    private void RefreshCurrentCar()
+    {
+        Debug.Log("[MenuCarSpawner] RefreshCurrentCar called.");
+        // Пересоздаём текущую машину
+        ShowCar(_currentCarIndex);
     }
 
     /// <summary>
@@ -128,14 +174,13 @@ public class MenuCarSpawner : MonoBehaviour
     private void ApplyPaintColor(GameObject carInstance, string colorHex)
     {
         Renderer[] renderers = carInstance.GetComponentsInChildren<Renderer>();
-        Color newColor;
-        if (ColorUtility.TryParseHtmlString(colorHex, out newColor))
+        if (ColorUtility.TryParseHtmlString(colorHex, out Color newColor))
         {
             foreach (Renderer renderer in renderers)
             {
-                foreach (Material mat in renderer.materials)
+                for (int i = 0; i < renderer.materials.Length; i++)
                 {
-                    mat.color = newColor;
+                    renderer.materials[i].color = newColor;
                 }
             }
             Debug.Log($"[MenuCarSpawner] Applied color {colorHex} to car.");

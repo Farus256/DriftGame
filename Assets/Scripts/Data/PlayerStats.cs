@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class PlayerStats
@@ -14,35 +15,43 @@ public class PlayerStats
 
     [SerializeField] private int level;
     public int Level => level;
-    
-    // Если нужны дополнительные поля, раскомментируйте и добавьте их с [SerializeField]
-    // [SerializeField]
-    // private int selectedCarIndex;
-    // public int SelectedCarIndex => selectedCarIndex;
 
-    // [SerializeField]
-    // private int totalWins;
-    // public int TotalWins => totalWins;
+    // Новое поле: список купленных машин
+    [SerializeField] private List<int> purchasedCars = new List<int>();
+    public List<int> PurchasedCars => purchasedCars;
 
-    // Пустой конструктор для десериализации
     public PlayerStats() { }
 
-    // Конструктор для инициализации
     public PlayerStats(string playerName, float initialMoney, int initialLevel)
     {
         this.playerName = playerName;
         this.money = initialMoney;
-        this.totalDriftPoints = 0f; // Начальные очки дрифта равны нулю
+        this.totalDriftPoints = 0f;
         this.level = initialLevel;
+        this.purchasedCars = new List<int>();
     }
-    
+
     public void AddMoney(float amount)
     {
         money += amount;
     }
-    
+
     public void AddDriftPoints(float amount)
     {
         totalDriftPoints += amount;
+    }
+
+    // Методы для покупок
+    public bool IsCarPurchased(int carId)
+    {
+        return purchasedCars.Contains(carId);
+    }
+
+    public void PurchaseCar(int carId)
+    {
+        if (!purchasedCars.Contains(carId))
+        {
+            purchasedCars.Add(carId);
+        }
     }
 }

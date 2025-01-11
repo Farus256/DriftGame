@@ -34,6 +34,10 @@ public class CarStats
     [SerializeField] private string paintColor; // Пример: "#FFFFFF" для белого
     public string PaintColor => paintColor;
 
+    // Новое поле - стоимость машины
+    [SerializeField] private float cost;
+    public float Cost => cost;
+
     // Методы для улучшения характеристик
     public void UpgradeMotorPower(float amount)
     {
@@ -47,13 +51,22 @@ public class CarStats
         Debug.Log($"[CarStats] Brake Force upgraded by {amount}. New Brake Force: {brakeForce}");
     }
 
-    // Методы для активации дополнительных деталей
+    // Методы для активации и деактивации дополнительных деталей
     public void ActivateExtraPart(string partName)
     {
         if (!activeExtraParts.Contains(partName) && availableExtraParts.Contains(partName))
         {
             activeExtraParts.Add(partName);
             Debug.Log($"[CarStats] Activated extra part: {partName}");
+        }
+    }
+
+    public void DeactivateExtraPart(string partName)
+    {
+        if (activeExtraParts.Contains(partName))
+        {
+            activeExtraParts.Remove(partName);
+            Debug.Log($"[CarStats] Deactivated extra part: {partName}");
         }
     }
 

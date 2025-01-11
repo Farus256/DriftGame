@@ -118,18 +118,18 @@ public class GameController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.D))
         {
-            if (IronSource.Agent.isRewardedVideoAvailable())
-            {
-                Debug.Log("[GameUIManager] Showing Rewarded Ad...");
-                IronSource.Agent.showRewardedVideo();
-                
-                UpdatePlayerMoney(BaseReward *= 2);
-            }
-            else
-            {
-                Debug.Log("[GameUIManager] Rewarded Ad not available.");
-                UpdatePlayerMoney(BaseReward);
-            }
+            // // if (IronSource.Agent.isRewardedVideoAvailable())
+            // // {
+            // //     Debug.Log("[GameUIManager] Showing Rewarded Ad...");
+            // //     // IronSource.Agent.showRewardedVideo();
+            // //     
+            // //     UpdatePlayerMoney(BaseReward *= 2);
+            // // }
+            // else
+            // {
+            //     Debug.Log("[GameUIManager] Rewarded Ad not available.");
+            //     UpdatePlayerMoney(BaseReward);
+            // }
         }
     }
 

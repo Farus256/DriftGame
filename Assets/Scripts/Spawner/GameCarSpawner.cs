@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GameCarSpawner : MonoBehaviour
 {
-     [SerializeField] private Transform playerCarSpawnPoint;
+    [SerializeField] private Transform playerCarSpawnPoint;
 
     private void Awake()
     {
@@ -22,6 +22,7 @@ public class GameCarSpawner : MonoBehaviour
 
         // 2) Загрузим список машин (через CarDataManager)
         CarStats[] allCars = CarDataManager.LoadAllCarStats();
+
         // Найдём машину по ID
         CarStats selectedCar = null;
         for (int i = 0; i < allCars.Length; i++)
@@ -51,21 +52,86 @@ public class GameCarSpawner : MonoBehaviour
         // 4) Спавним машину в сцене
         GameObject playerCar = Instantiate(prefab, playerCarSpawnPoint.position, playerCarSpawnPoint.rotation);
 
-        // 5) Устанавливаем CarController характеристики (если нужно)
-        CarController controller = playerCar.GetComponent<CarController>();
-        if (controller != null)
-        {
-            controller.motorPower = selectedCar.MotorPower;
-            controller.brakeForce = selectedCar.BrakeForce;
-        }
+        // 5) Настраиваем общие характеристики: мотор, тормоза, масса
+        ApplyCarParameters(playerCar, selectedCar);
 
-        // Или настраиваем Rigidbody
-        Rigidbody rb = playerCar.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.mass = selectedCar.Mass;
-        }
+        // 6) Применяем цвет и дополнительные детали
+        ApplyPaintColor(playerCar, selectedCar.PaintColor);
+        ApplyExtraParts(playerCar, selectedCar.ActiveExtraParts);
 
         Debug.Log($"[GameSceneManager] Spawned car '{selectedCar.CarName}' with ID={selectedCar.ID}");
+    }
+
+    /// <summary>
+    /// Применяет параметры машины (мотор, тормоза, масса) из CarStats.
+    /// </summary>
+    private void ApplyCarParameters(GameObject car, CarStats stats)
+    {
+        // CarController (если в вашем проекте нужен для управления)
+        CarController controller = car.GetComponent<CarController>();
+        if (controller != null)
+        {
+            controller.motorPower = stats.MotorPower;
+            controller.brakeForce = stats.BrakeForce;
+        }
+
+        // Rigidbody
+        Rigidbody rb = car.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.mass = stats.Mass;
+        }
+    }
+
+    /// <summary>
+    /// Применяет цвет покраски к машине (по всему Mesh-у).
+    /// </summary>
+    private void ApplyPaintColor(GameObject car, string colorHex)
+    {
+        if (ColorUtility.TryParseHtmlString(colorHex, out Color newColor))
+        {
+            Renderer[] renderers = car.GetComponentsInChildren<Renderer>();
+            foreach (Renderer rend in renderers)
+            {
+                // Меняем цвет у всех материалов рендера
+                for (int i = 0; i < rend.materials.Length; i++)
+                {
+                    rend.materials[i].color = newColor;
+                }
+            }
+            Debug.Log($"[GameSceneManager] Applied color {colorHex} to car.");
+        }
+        else
+        {
+            Debug.LogError($"[GameSceneManager] Invalid color code: {colorHex}");
+        }
+    }
+
+    /// <summary>
+    /// Включает/выключает дополнительные детали (Spoiler, SideSkirts и т.д.).
+    /// Предполагается, что объекты в префабе называются так же, как и в ActiveExtraParts.
+    /// </summary>
+    private void ApplyExtraParts(GameObject car, List<string> activeParts)
+    {
+        // Для упрощения считаем, что все доступные детали
+        // уже есть в иерархии префаба с соответствующими именами.
+        // Если детали нет - выводим предупреждение.
+        string[] possibleParts = { "Spoiler", "SideSkirts" }; // Можно расширить
+
+        foreach (string partName in possibleParts)
+        {
+            Transform partTransform = car.transform.Find(partName);
+            if (partTransform != null)
+            {
+                // Активируем, если в списке, иначе — деактивируем
+                bool shouldBeActive = activeParts.Contains(partName);
+                partTransform.gameObject.SetActive(shouldBeActive);
+                Debug.Log($"[GameSceneManager] {(shouldBeActive ? "Enabled" : "Disabled")} part: {partName}");
+            }
+            else
+            {
+                Debug.LogWarning($"[GameSceneManager] Part '{partName}' not found in prefab hierarchy.");
+            }
+        }
     }
 }

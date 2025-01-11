@@ -4,9 +4,9 @@ using UnityEngine.UI;
 
 public class MenuUIManager : MonoBehaviour
 {
-    [Header("CostSettings")]
-    [SerializeField] private const float CostMultiplier = 0.2f;
-    
+    [Header("Cost Settings")]
+    private const float CostMultiplier = 0.2f; // Для апгрейдов
+
     [Header("References")]
     [SerializeField] private MenuCarSpawner menuCarSpawner;
     [SerializeField] private TMP_Text moneyText;
@@ -25,22 +25,35 @@ public class MenuUIManager : MonoBehaviour
     [SerializeField] private TMP_Text motorPowerUpgradeCostText;
     [SerializeField] private TMP_Text brakeForceUpgradeCostText;
 
+    [Header("Purchase UI")]
+    [SerializeField] private Button buyCarButton;  // Кнопка «Купить машину»
+    [SerializeField] private Button playButton;    // Кнопка «Play»
+
+    [Header("Car Cost Text")]
+    [SerializeField] private TMP_Text carCostText;
+    
+    [Header("Settings")]
+    [SerializeField] private GameObject settingsPanel;
     private PlayerStats _playerStats;
 
     private void Awake()
     {
-        // Убедимся, что MenuCarSpawner назначен
+        // Проверка назначений
         if (menuCarSpawner == null)
         {
             Debug.LogError("[MenuUIManager] MenuCarSpawner is not assigned in the inspector!");
         }
 
-        // Настройка слушателей кнопок
+        // Подписка на кнопки
         if (upgradeMotorPowerButton != null)
             upgradeMotorPowerButton.onClick.AddListener(OnUpgradeMotorPower);
-
         if (upgradeBrakeForceButton != null)
             upgradeBrakeForceButton.onClick.AddListener(OnUpgradeBrakeForce);
+
+        if (buyCarButton != null)
+            buyCarButton.onClick.AddListener(OnBuyCarButton);
+        if (playButton != null)
+            playButton.onClick.AddListener(OnPlayButton);
     }
 
     private void Start()
@@ -52,25 +65,32 @@ public class MenuUIManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Удаление слушателей, чтобы избежать утечек
         if (upgradeMotorPowerButton != null)
             upgradeMotorPowerButton.onClick.RemoveListener(OnUpgradeMotorPower);
-
         if (upgradeBrakeForceButton != null)
             upgradeBrakeForceButton.onClick.RemoveListener(OnUpgradeBrakeForce);
+
+        if (buyCarButton != null)
+            buyCarButton.onClick.RemoveListener(OnBuyCarButton);
+        if (playButton != null)
+            playButton.onClick.RemoveListener(OnPlayButton);
+    }
+    
+    private void OnEnable()
+    {
+        GlobalEventManager.onCarUpdated.AddListener(UpdateCarStatsUI);
     }
 
-    /// <summary>
-    /// Загружает данные игрока
-    /// </summary>
+    private void OnDisable()
+    {
+        GlobalEventManager.onCarUpdated.RemoveListener(UpdateCarStatsUI);
+    }
+    
     private void LoadPlayerStats()
     {
         _playerStats = PlayerDataManager.LoadPlayerStats();
     }
 
-    /// <summary>
-    /// Обновляет отображение денег в UI
-    /// </summary>
     public void UpdateMoneyText()
     {
         if (_playerStats != null)
@@ -79,170 +99,244 @@ public class MenuUIManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Обновляет отображение характеристик текущей машины
-    /// </summary>
     public void UpdateCarStatsUI()
     {
-        CarStats currentCar = menuCarSpawner.GetCurrentCarStats();
-        if (currentCar == null)
+        if (_playerStats == null)
+        {
+            Debug.LogWarning("[MenuUIManager] PlayerStats not loaded!");
+            return;
+        }
+
+        // Берём ID выбранного автомобиля из CarSelection
+        int selectedCarId = CarSelection.SelectedCarId;
+        if (selectedCarId < 0)
         {
             Debug.LogWarning("[MenuUIManager] No car selected!");
             ClearCarStatsUI();
             return;
         }
 
-        // Обновление текстовых полей
-        carNameLabel.text = $"Car: {currentCar.CarName}";
-        massText.text = $"Mass: {currentCar.Mass} kg";
-        motorPowerText.text = $"Motor Power: {currentCar.MotorPower} HP";
-        brakeForceText.text = $"Brake Force: {currentCar.BrakeForce} N";
-
-        // Обновление стоимости апгрейдов
-        motorPowerUpgradeCostText.text = $"Upgrade Motor Power: ${CalculateUpgradeCost(currentCar.MotorPower)}";
-        brakeForceUpgradeCostText.text = $"Upgrade Brake Force: ${CalculateUpgradeCost(currentCar.BrakeForce)}";
-    }
-
-    /// <summary>
-    /// Очищает UI отображения характеристик машины
-    /// </summary>
-    private void ClearCarStatsUI()
-    {
-        carNameLabel.text = "Car: -";
-        massText.text = "Mass: - kg";
-        motorPowerText.text = "Motor Power: - HP";
-        brakeForceText.text = "Brake Force: - N";
-
-        motorPowerUpgradeCostText.text = "Upgrade Motor Power: -";
-        brakeForceUpgradeCostText.text = "Upgrade Brake Force: -";
-    }
-
-    /// <summary>
-    /// Рассчитывает стоимость апгрейда на основе текущего значения характеристики
-    /// </summary>
-    private float CalculateUpgradeCost(float currentValue)
-    {
-        
-        return CostMultiplier * currentValue;
-    }
-
-    /// <summary>
-    /// Обработчик нажатия кнопки апгрейда мощности двигателя
-    /// </summary>
-    private void OnUpgradeMotorPower()
-    {
-        CarStats currentCar = menuCarSpawner.GetCurrentCarStats();
+        // Получаем CarStats по ID
+        CarStats currentCar = CarDataManager.GetCarStatsById(selectedCarId);
         if (currentCar == null)
         {
-            Debug.LogError("[MenuUIManager] No car stats available!");
+            Debug.LogWarning("[MenuUIManager] currentCar is null!");
+            ClearCarStatsUI();
             return;
         }
 
-        float upgradeAmount = 100f; // Примерное увеличение
-        float upgradeCost = CalculateUpgradeCost(currentCar.MotorPower);
+        carNameLabel.text   = $"Car: {currentCar.CarName}";
+        massText.text       = $"Mass: {currentCar.Mass} kg";
+        motorPowerText.text = $"Motor Power: {currentCar.MotorPower} HP";
+        brakeForceText.text = $"Brake Force: {currentCar.BrakeForce} N";
+
+        float motorUpgradeCost = CalculateUpgradeCost(currentCar.MotorPower);
+        float brakeUpgradeCost = CalculateUpgradeCost(currentCar.BrakeForce);
+
+        motorPowerUpgradeCostText.text = $"Upgrade Motor: ${motorUpgradeCost:F2}";
+        brakeForceUpgradeCostText.text = $"Upgrade Brakes: ${brakeUpgradeCost:F2}";
+
+        // Отображаем стоимость машины
+        if (carCostText != null)
+        {
+            carCostText.text = $"Cost: ${currentCar.Cost:F2}";
+        }
+
+        // Проверяем, куплена ли машина
+        bool isCarOwned = _playerStats.IsCarPurchased(currentCar.ID);
+
+        if (buyCarButton != null)
+        {
+            buyCarButton.gameObject.SetActive(!isCarOwned);
+        }
+
+        if (upgradeMotorPowerButton != null)
+            upgradeMotorPowerButton.interactable = isCarOwned;
+        if (upgradeBrakeForceButton != null)
+            upgradeBrakeForceButton.interactable = isCarOwned;
+        if (playButton != null)
+            playButton.interactable = isCarOwned;
+    }
+
+    private void ClearCarStatsUI()
+    {
+        carNameLabel.text               = "Car: -";
+        massText.text                   = "Mass: - kg";
+        motorPowerText.text             = "Motor Power: - HP";
+        brakeForceText.text             = "Brake Force: - N";
+        motorPowerUpgradeCostText.text  = "Upgrade Motor: -";
+        brakeForceUpgradeCostText.text  = "Upgrade Brakes: -";
+
+        if (carCostText != null)
+            carCostText.text = "Cost: -";
+
+        if (buyCarButton != null)
+            buyCarButton.gameObject.SetActive(false);
+
+        if (upgradeMotorPowerButton != null)
+            upgradeMotorPowerButton.interactable = false;
+        if (upgradeBrakeForceButton != null)
+            upgradeBrakeForceButton.interactable = false;
+        if (playButton != null)
+            playButton.interactable = false;
+    }
+
+    private float CalculateUpgradeCost(float currentValue)
+    {
+        return CostMultiplier * currentValue;
+    }
+
+    private void OnBuyCarButton()
+    {
+        int selectedCarId = CarSelection.SelectedCarId;
+        if (selectedCarId < 0) return;
+
+        CarStats currentCar = CarDataManager.GetCarStatsById(selectedCarId);
+        if (currentCar == null) return;
+
+        if (_playerStats.IsCarPurchased(currentCar.ID))
+        {
+            Debug.LogWarning("[MenuUIManager] Car already purchased!");
+            return;
+        }
+
+        if (_playerStats.Money < currentCar.Cost)
+        {
+            Debug.LogWarning("[MenuUIManager] Not enough money to buy this car!");
+            return;
+        }
+
+        _playerStats.AddMoney(-currentCar.Cost);
+        _playerStats.PurchaseCar(currentCar.ID);
+
+        PlayerDataManager.SavePlayerStats(_playerStats);
+
+        UpdateMoneyText();
+        UpdateCarStatsUI();
+
+        Debug.Log($"[MenuUIManager] Car '{currentCar.CarName}' purchased for ${currentCar.Cost}. Remaining money: {_playerStats.Money}");
+    }
+
+    private void OnUpgradeMotorPower()
+    {
+        int selectedCarId = CarSelection.SelectedCarId;
+        if (selectedCarId < 0) return;
+
+        CarStats currentCar = CarDataManager.GetCarStatsById(selectedCarId);
+        if (currentCar == null) return;
+
+        float upgradeAmount = 100f;
+        float upgradeCost   = CalculateUpgradeCost(currentCar.MotorPower);
 
         if (_playerStats.Money < upgradeCost)
         {
             Debug.LogWarning("[MenuUIManager] Not enough money for Motor Power upgrade!");
-            // Добавьте UI уведомление о нехватке денег
             return;
         }
 
-        // Уменьшаем деньги
         _playerStats.AddMoney(-upgradeCost);
         PlayerDataManager.SavePlayerStats(_playerStats);
         UpdateMoneyText();
 
-        // Увеличиваем мощность
         currentCar.UpgradeMotorPower(upgradeAmount);
-
-        // Сохраняем обновленные car stats
         CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
-
-        // Обновляем UI
         UpdateCarStatsUI();
 
-        Debug.Log($"[MenuUIManager] Upgraded Motor Power by {upgradeAmount}. Cost: {upgradeCost}. Remaining Money: {_playerStats.Money}");
+        Debug.Log($"[MenuUIManager] Upgraded Motor Power by {upgradeAmount}. Cost: {upgradeCost}. Remaining: {_playerStats.Money}");
     }
 
-    /// <summary>
-    /// Обработчик нажатия кнопки апгрейда тормозной силы
-    /// </summary>
     private void OnUpgradeBrakeForce()
     {
-        CarStats currentCar = menuCarSpawner.GetCurrentCarStats();
-        if (currentCar == null)
-        {
-            Debug.LogError("[MenuUIManager] No car stats available!");
-            return;
-        }
+        int selectedCarId = CarSelection.SelectedCarId;
+        if (selectedCarId < 0) return;
 
-        float upgradeAmount = 100f; // Примерное увеличение
-        float upgradeCost = CalculateUpgradeCost(currentCar.BrakeForce);
+        CarStats currentCar = CarDataManager.GetCarStatsById(selectedCarId);
+        if (currentCar == null) return;
+
+        float upgradeAmount = 100f;
+        float upgradeCost   = CalculateUpgradeCost(currentCar.BrakeForce);
 
         if (_playerStats.Money < upgradeCost)
         {
             Debug.LogWarning("[MenuUIManager] Not enough money for Brake Force upgrade!");
-            // Добавьте UI уведомление о нехватке денег
             return;
         }
 
-        // Уменьшаем деньги
         _playerStats.AddMoney(-upgradeCost);
         PlayerDataManager.SavePlayerStats(_playerStats);
         UpdateMoneyText();
 
-        // Увеличиваем тормозную силу
         currentCar.UpgradeBrakeForce(upgradeAmount);
-
-        // Сохраняем обновленные car stats
         CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
-
-        // Обновляем UI
         UpdateCarStatsUI();
 
-        Debug.Log($"[MenuUIManager] Upgraded Brake Force by {upgradeAmount}. Cost: {upgradeCost}. Remaining Money: {_playerStats.Money}");
+        Debug.Log($"[MenuUIManager] Upgraded Brake Force by {upgradeAmount}. Cost: {upgradeCost}. Remaining: {_playerStats.Money}");
     }
 
-    /// <summary>
-    /// Обработчик переключения машины (следующая)
-    /// </summary>
     public void OnNextCarButton()
     {
+        // Переключаемся на следующую машину
         menuCarSpawner.ShowNextCar();
+
+        // После переключения получаем новый CarStats и сохраняем в CarSelection
+        CarStats newCar = menuCarSpawner.GetCurrentCarStats();
+        if (newCar != null)
+        {
+            CarSelection.SelectCar(newCar.ID);
+        }
+
         UpdateCarStatsUI();
     }
 
-    /// <summary>
-    /// Обработчик переключения машины (предыдущая)
-    /// </summary>
     public void OnPreviousCarButton()
     {
         menuCarSpawner.ShowPreviousCar();
+
+        // После переключения получаем новый CarStats и сохраняем в CarSelection
+        CarStats newCar = menuCarSpawner.GetCurrentCarStats();
+        if (newCar != null)
+        {
+            CarSelection.SelectCar(newCar.ID);
+        }
+
         UpdateCarStatsUI();
     }
 
-    /// <summary>
-    /// Обработчик кнопки Play
-    /// </summary>
-    public void OnPlayButton()
+    public void OnSettingsButton()
     {
-        CarStats chosenCar = menuCarSpawner.GetCurrentCarStats();
+        settingsPanel.SetActive(!settingsPanel.activeSelf);
+        UpdateCarStatsUI();
+    }
 
-        if (chosenCar == null)
+    private void OnPlayButton()
+    {
+        int selectedCarId = CarSelection.SelectedCarId;
+        if (selectedCarId < 0)
         {
             Debug.LogWarning("[MenuUIManager] No car selected!");
             return;
         }
 
-        CarSelection.SelectedCarId = chosenCar.ID;
+        CarStats chosenCar = CarDataManager.GetCarStatsById(selectedCarId);
+        if (chosenCar == null)
+        {
+            Debug.LogWarning("[MenuUIManager] Invalid car ID!");
+            return;
+        }
 
+        if (!_playerStats.IsCarPurchased(chosenCar.ID))
+        {
+            Debug.LogWarning("[MenuUIManager] You cannot play with a car you haven't purchased!");
+            return;
+        }
+
+        // Запоминаем выбранный автомобиль (если нужно в других сценах)
+        CarSelection.SelectCar(chosenCar.ID);
+
+        // Можно вызвать начало уровня
         GlobalEventManager.TriggerLevelStart();
     }
 
-    /// <summary>
-    /// Обработчик кнопки Exit
-    /// </summary>
     public void OnExitButton()
     {
         Application.Quit();

@@ -1,193 +1,345 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class TuningUIManager : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private MenuCarSpawner menuCarSpawner;
-    [SerializeField] private MenuUIManager menuUIManager; // Для обновления денег
+    [SerializeField] private MenuUIManager menuUIManager; // Для обновления UI (например, отображения денег)
 
-    [Header("Extra Parts UI")]
-    [SerializeField] private Transform extraPartsContainer; // Родитель для кнопок дополнительных деталей
-    [SerializeField] private Button extraPartButtonPrefab; // Префаб кнопки для каждой детали
+    [Header("Buttons")]
+    [SerializeField] private Button spoilerButton;
+    [SerializeField] private Button sideSkirtsButton;
+    [SerializeField] private Button paintRedButton;
+    [SerializeField] private Button paintBlueButton;
+    [SerializeField] private Button paintStandardButton; 
+    [SerializeField] private Button paintDefaultButton;   // Новая кнопка для дефолтного цвета
 
-    [Header("Paint UI")]
-    [SerializeField] private Transform paintOptionsContainer; // Родитель для кнопок покраски
-    [SerializeField] private Button paintOptionButtonPrefab; // Префаб кнопки для каждого цвета
-
-    // Стоимость дополнительных деталей и покраски (можно сделать более динамичной)
+    // Стоимость дополнительных деталей и покраски
     [SerializeField] private float extraPartCost = 500f;
     [SerializeField] private float paintCost = 300f;
 
-    // Список доступных цветов
-    [SerializeField] private List<string> availablePaintColors; // Формат HEX, например, "#FF5733"
+    private const string STANDARD_COLOR_HEX = "#FFFFFF";
+    private const string DEFAULT_COLOR_HEX  = "#CCCCCC";
 
-    private CarStats currentCarStats;
     private PlayerStats playerStats;
 
     private void Start()
     {
-        // Загрузка данных игрока и текущей машины
-        playerStats = PlayerDataManager.LoadPlayerStats();
-        currentCarStats = menuCarSpawner.GetCurrentCarStats();
+        Debug.Log("[TuningUIManager] Start called.");
 
-        if (currentCarStats == null)
+        // Загружаем данные игрока
+        playerStats = PlayerDataManager.LoadPlayerStats();
+        if (playerStats == null)
         {
-            Debug.LogError("[TuningUIManager] currentCarStats is null. Ensure that MenuCarSpawner is correctly assigned and returns a valid CarStats.");
+            Debug.LogError("[TuningUIManager] Failed to load PlayerStats.");
             return;
         }
 
-        // Генерация UI для дополнительных деталей
-        PopulateExtraPartsUI();
-
-        // Генерация UI для покраски
-        PopulatePaintOptionsUI();
+        RefreshUI();
     }
-
 
     private void OnEnable()
     {
-        // Подписка на событие смены машины, если есть
-        // Например, если MenuCarSpawner имеет событие OnCarChanged, можно подписаться
+        // Подписываемся на глобальное событие
+        GlobalEventManager.onCarUpdated.AddListener(RefreshUI);
     }
 
     private void OnDisable()
     {
-        // Отписка от событий
+        // Отписываемся
+        GlobalEventManager.onCarUpdated.RemoveListener(RefreshUI);
     }
 
     /// <summary>
-    /// Генерация кнопок для дополнительных деталей
+    /// Обновляет UI при изменении данных автомобиля или переключении.
     /// </summary>
-    private void PopulateExtraPartsUI()
+    private void RefreshUI()
     {
-        foreach (string part in currentCarStats.AvailableExtraParts)
+        Debug.Log("[TuningUIManager] RefreshUI called.");
+
+        // Пересчитываем PlayerStats
+        playerStats = PlayerDataManager.LoadPlayerStats();
+        if (playerStats == null)
         {
-            // Проверяем, активирована ли деталь
-            bool isActive = currentCarStats.ActiveExtraParts.Contains(part);
+            Debug.LogError("[TuningUIManager] Failed to reload PlayerStats in RefreshUI.");
+            return;
+        }
 
-            // Создаём кнопку
-            Button partButton = Instantiate(extraPartButtonPrefab, extraPartsContainer);
-            TMP_Text buttonText = partButton.GetComponentInChildren<TMP_Text>();
-            buttonText.text = isActive ? $"{part} (Активно)" : $"{part} (${extraPartCost})";
+        // Получаем текущий ID выбранного авто
+        int selectedCarId = CarSelection.SelectedCarId;
+        if (selectedCarId < 0)
+        {
+            Debug.LogWarning("[TuningUIManager] No car selected in CarSelection.");
+            // Можно тут же отключить все кнопки, если надо
+            return;
+        }
 
-            // Деактивируем кнопку, если деталь уже активирована
-            if (isActive)
+        // Берём актуальные данные об автомобиле
+        CarStats currentCarStats = CarDataManager.GetCarStatsById(selectedCarId);
+        if (currentCarStats == null)
+        {
+            Debug.LogWarning("[TuningUIManager] currentCarStats is null (invalid ID?).");
+            return;
+        }
+
+        // Кнопки для доп. деталей
+        UpdateExtraPartButton(spoilerButton,    "Spoiler",    currentCarStats);
+        UpdateExtraPartButton(sideSkirtsButton, "SideSkirts", currentCarStats);
+
+        // Кнопки для покрасок
+        UpdatePaintButton(paintRedButton,      "Red",      "#FF0000",    isFree: false, currentCarStats);
+        UpdatePaintButton(paintBlueButton,     "Blue",     "#0000FF",    isFree: false, currentCarStats);
+        UpdatePaintButton(paintStandardButton, "Standard", STANDARD_COLOR_HEX, isFree: true,  currentCarStats);
+        UpdatePaintButton(paintDefaultButton,  "Default",  DEFAULT_COLOR_HEX,  isFree: true,  currentCarStats);
+    }
+
+    private void UpdateExtraPartButton(Button button, string partName, CarStats carStats)
+    {
+        if (button == null)
+        {
+            Debug.LogError($"[TuningUIManager] Button for '{partName}' is not assigned.");
+            return;
+        }
+
+        // Если машина не куплена
+        if (!playerStats.IsCarPurchased(carStats.ID))
+        {
+            button.interactable = false;
+            var lockedText = button.GetComponentInChildren<TMP_Text>();
+            if (lockedText != null)
+                lockedText.text = $"{partName} (Locked)";
+            return;
+        }
+
+        bool isActive = carStats.ActiveExtraParts.Contains(partName);
+        TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
+        if (!buttonText)
+        {
+            Debug.LogError($"[TuningUIManager] TMP_Text component not found on button for '{partName}'.");
+            return;
+        }
+
+        buttonText.text     = isActive ? $"{partName} (Installed)" : $"{partName} (${extraPartCost})";
+        button.interactable = true; 
+    }
+
+    private void UpdatePaintButton(Button button, string colorName, string colorHex, bool isFree, CarStats carStats)
+    {
+        if (button == null)
+        {
+            Debug.LogError($"[TuningUIManager] Paint Button for '{colorName}' is not assigned.");
+            return;
+        }
+
+        // Если машина не куплена
+        if (!playerStats.IsCarPurchased(carStats.ID))
+        {
+            button.interactable = false;
+            var lockedText = button.GetComponentInChildren<TMP_Text>();
+            if (lockedText != null)
+                lockedText.text = $"{colorName} (Locked)";
+            return;
+        }
+
+        bool isApplied = carStats.PaintColor == colorHex;
+        TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
+        if (!buttonText)
+        {
+            Debug.LogError($"[TuningUIManager] TMP_Text component not found on paint button for '{colorName}'.");
+            return;
+        }
+
+        if (isFree)
+        {
+            buttonText.text = isApplied ? $"{colorName} (Applied)" : $"{colorName} (Free)";
+        }
+        else
+        {
+            buttonText.text = isApplied ? $"{colorName} (Applied)" : $"{colorName} (${paintCost})";
+        }
+
+        // Если цвет уже применён, кнопку отключаем
+        button.interactable = !isApplied;
+    }
+
+    // ================================
+    // Методы для переключения деталей
+    // ================================
+    public void OnButtonSpoilerToggle()
+    {
+        ToggleExtraPart("Spoiler");
+    }
+
+    public void OnButtonSideSkirtsToggle()
+    {
+        ToggleExtraPart("SideSkirts");
+    }
+
+    private void ToggleExtraPart(string partName)
+    {
+        Debug.Log($"[TuningUIManager] ToggleExtraPart called for: {partName}");
+
+        int selectedCarId = CarSelection.SelectedCarId;
+        if (selectedCarId < 0)
+        {
+            Debug.LogWarning("[TuningUIManager] No car selected to toggle part.");
+            return;
+        }
+
+        CarStats carStats = CarDataManager.GetCarStatsById(selectedCarId);
+        if (carStats == null)
+        {
+            Debug.LogError("[TuningUIManager] CarStats is null. Cannot toggle part.");
+            return;
+        }
+
+        if (!playerStats.IsCarPurchased(carStats.ID))
+        {
+            Debug.LogWarning("[TuningUIManager] Cannot toggle part on an unpurchased car.");
+            return;
+        }
+
+        if (!carStats.AvailableExtraParts.Contains(partName))
+        {
+            Debug.LogWarning($"[TuningUIManager] Part '{partName}' is not available for this car.");
+            return;
+        }
+
+        bool isActive = carStats.ActiveExtraParts.Contains(partName);
+        if (isActive)
+        {
+            // Деактивируем деталь
+            carStats.DeactivateExtraPart(partName);
+            Debug.Log($"[TuningUIManager] Deactivated {partName}");
+        }
+        else
+        {
+            // Покупаем деталь
+            if (playerStats.Money >= extraPartCost)
             {
-                partButton.interactable = false;
+                playerStats.AddMoney(-extraPartCost);
+                PlayerDataManager.SavePlayerStats(playerStats);
+
+                // Обновляем текст денег
+                menuUIManager.UpdateMoneyText();
+
+                // Активируем деталь
+                carStats.ActivateExtraPart(partName);
+                CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
+
+                Debug.Log($"[TuningUIManager] Purchased and activated {partName}");
             }
             else
             {
-                // Добавляем обработчик нажатия
-                partButton.onClick.AddListener(() => OnExtraPartPurchase(part, partButton));
+                Debug.LogWarning("[TuningUIManager] Not enough money to purchase extra part.");
+                // Здесь можно вызвать всплывающее сообщение о нехватке денег
+                return;
             }
         }
+
+        // Сообщаем всем, что машина обновилась
+        GlobalEventManager.TriggerCarUpdated();
     }
 
-    /// <summary>
-    /// Обработчик покупки дополнительной детали
-    /// </summary>
-    private void OnExtraPartPurchase(string partName, Button button)
+    // ===========================
+    // Методы для покраски
+    // ===========================
+    public void OnButtonPaintRed()
     {
-        if (playerStats.Money >= extraPartCost)
-        {
-            // Уменьшаем деньги
-            playerStats.AddMoney(-extraPartCost);
-            PlayerDataManager.SavePlayerStats(playerStats);
-            menuUIManager.UpdateMoneyText();
-
-            // Активируем деталь
-            currentCarStats.ActivateExtraPart(partName);
-            CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
-
-            // Обновляем кнопку
-            TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
-            buttonText.text = $"{partName} (Активно)";
-            button.interactable = false;
-
-            // Активируем деталь на спауне
-            // Можно добавить событие или другой метод для обновления спауна машины
-
-            Debug.Log($"[TuningUIManager] Purchased and activated {partName}");
-        }
-        else
-        {
-            Debug.LogWarning("[TuningUIManager] Not enough money to purchase extra part.");
-            // Добавьте UI уведомление о нехватке денег
-        }
+        ApplyPaint("#FF0000", false);
     }
 
-    /// <summary>
-    /// Генерация кнопок для покраски
-    /// </summary>
-    private void PopulatePaintOptionsUI()
+    public void OnButtonPaintBlue()
     {
-        foreach (string colorHex in availablePaintColors)
-        {
-            // Создаём кнопку
-            Button paintButton = Instantiate(paintOptionButtonPrefab, paintOptionsContainer);
-            TMP_Text buttonText = paintButton.GetComponentInChildren<TMP_Text>();
-            buttonText.text = $"{colorHex} (${paintCost})";
-
-            // Добавляем обработчик нажатия
-            paintButton.onClick.AddListener(() => OnPaintPurchase(colorHex, paintButton));
-        }
+        ApplyPaint("#0000FF", false);
     }
 
-    /// <summary>
-    /// Обработчик покупки покраски
-    /// </summary>
-    private void OnPaintPurchase(string colorHex, Button button)
+    public void OnButtonPaintStandard()
     {
-        if (playerStats.Money >= paintCost)
+        ApplyPaint(STANDARD_COLOR_HEX, true);
+    }
+
+    public void OnButtonPaintDefault()
+    {
+        ApplyPaint(DEFAULT_COLOR_HEX, true);
+    }
+
+    private void ApplyPaint(string colorHex, bool isFree)
+    {
+        int selectedCarId = CarSelection.SelectedCarId;
+        if (selectedCarId < 0)
         {
-            // Уменьшаем деньги
+            Debug.LogWarning("[TuningUIManager] No car selected to paint.");
+            return;
+        }
+
+        CarStats carStats = CarDataManager.GetCarStatsById(selectedCarId);
+        if (carStats == null)
+        {
+            Debug.LogError("[TuningUIManager] CarStats is null. Cannot apply paint.");
+            return;
+        }
+
+        if (!playerStats.IsCarPurchased(carStats.ID))
+        {
+            Debug.LogWarning("[TuningUIManager] Cannot paint an unpurchased car!");
+            return;
+        }
+
+        if (carStats.PaintColor == colorHex)
+        {
+            Debug.LogWarning($"[TuningUIManager] Color '{colorHex}' is already applied.");
+            return;
+        }
+
+        if (!isFree)
+        {
+            if (playerStats.Money < paintCost)
+            {
+                Debug.LogWarning("[TuningUIManager] Not enough money to purchase paint.");
+                return;
+            }
+
             playerStats.AddMoney(-paintCost);
             PlayerDataManager.SavePlayerStats(playerStats);
             menuUIManager.UpdateMoneyText();
-
-            // Устанавливаем цвет покраски
-            currentCarStats.SetPaintColor(colorHex);
-            CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
-
-            // Применяем цвет к машине, если она уже спаунена
-            GameObject currentCar = menuCarSpawner.GetCurrentCarInstance();
-            if (currentCar != null)
-            {
-                ApplyPaintColor(currentCar, colorHex);
-            }
-
-            // Обновляем UI кнопки покраски (опционально)
-            // Например, отметить выбранный цвет
-
-            Debug.Log($"[TuningUIManager] Purchased and applied paint color {colorHex}");
         }
-        else
+
+        // Устанавливаем цвет покраски
+        carStats.SetPaintColor(colorHex);
+        CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
+
+        // Применяем цвет к текущему экземпляру (если он в сцене)
+        GameObject currentCar = menuCarSpawner.GetCurrentCarInstance();
+        if (currentCar != null)
         {
-            Debug.LogWarning("[TuningUIManager] Not enough money to purchase paint.");
-            // Добавьте UI уведомление о нехватке денег
+            ApplyPaintColorToCar(currentCar, colorHex);
         }
+
+        // Сообщаем всем, что машина обновилась
+        GlobalEventManager.TriggerCarUpdated();
+
+        Debug.Log(isFree
+            ? $"[TuningUIManager] Applied paint color {colorHex} for free"
+            : $"[TuningUIManager] Purchased and applied paint color {colorHex}");
     }
 
-    /// <summary>
-    /// Применяет цвет покраски к машине
-    /// </summary>
-    private void ApplyPaintColor(GameObject carInstance, string colorHex)
+    private void ApplyPaintColorToCar(GameObject carInstance, string colorHex)
     {
-        Renderer[] renderers = carInstance.GetComponentsInChildren<Renderer>();
-        Color newColor;
-        if (ColorUtility.TryParseHtmlString(colorHex, out newColor))
+        if (ColorUtility.TryParseHtmlString(colorHex, out Color newColor))
         {
+            Renderer[] renderers = carInstance.GetComponentsInChildren<Renderer>();
             foreach (Renderer renderer in renderers)
             {
-                foreach (Material mat in renderer.materials)
+                for (int i = 0; i < renderer.materials.Length; i++)
                 {
-                    mat.color = newColor;
+                    renderer.materials[i].color = newColor;
                 }
             }
-            Debug.Log($"[TuningUIManager] Applied color {colorHex} to car.");
+            Debug.Log($"[TuningUIManager] Applied color {colorHex} to car instance.");
         }
         else
         {
