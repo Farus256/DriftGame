@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEngine.UI;
 using Photon.Pun;
 
-[RequireComponent(typeof(Rigidbody))]
-public class CarController : MonoBehaviour
+// Добавим PhotonView, PhotonTransformView руками или в Инспекторе
+[RequireComponent(typeof(Rigidbody), typeof(PhotonView))]
+public class CarController : MonoBehaviourPun
 {
     [Header("Wheel Colliders")]
     public WheelCollider frontLeftWheelCollider;
@@ -18,25 +18,24 @@ public class CarController : MonoBehaviour
     public Transform rearRightWheelTransform;
 
     [Header("Car Settings")]
-    public float motorPower = 1500f; 
-    public float maxSteerAngle = 25f;  
-    public float brakeForce = 1500f; 
-    public float handbrakeForce = 3000f;  
-    public float driftFactor = 0.5f; 
-    public float autoSteerSpeed = 2f;  
-    public float driftThreshold = 10f;  
+    public float motorPower     = 1500f; 
+    public float maxSteerAngle  = 25f;   
+    public float brakeForce     = 1500f; 
+    public float handbrakeForce = 3000f; 
+    public float driftFactor    = 0.5f;  
+    public float autoSteerSpeed = 2f;    
+    public float driftThreshold = 10f;   
     public float autoSteerMinSpeed = 5f; 
-
-    public bool CanDrive { get; set; } = true; 
+    public bool  CanDrive       = true;
 
     private Rigidbody _rb;
-    private float _currentSteerAngle;
-    private bool _isDrifting;
+    private float     _currentSteerAngle;
+    private bool      _isDrifting;
 
     private WheelFrictionCurve _rearLeftOriginalFriction;
     private WheelFrictionCurve _rearRightOriginalFriction;
 
-    public bool IsDrifting => _isDrifting;
+    public bool  IsDrifting      => _isDrifting;
     public float CurrentSpeedKmh => _rb.velocity.magnitude * 3.6f;
 
     public delegate void DriftEventHandler(bool started, float driftDuration);
@@ -45,11 +44,7 @@ public class CarController : MonoBehaviour
     private bool  _wasDriftingLastFrame;
     private float _driftStartTime;
 
-    private PhotonView _photonView;
-    private bool _isOnMultiplayer;
-
-    // --- Поля для мобильного управления ---
-    [Header("Mobile Input Flags")]
+    // --- Поля для мобильного управления (пример) ---
     public bool acceleratePressed = false;
     public bool brakePressed      = false;
     public bool steerLeftPressed  = false;
@@ -58,17 +53,6 @@ public class CarController : MonoBehaviour
 
     private void Start()
     {
-        // Проверка на PhotonView
-        if (GetComponent<PhotonView>() != null)
-        {
-            _isOnMultiplayer = true;
-            _photonView = GetComponent<PhotonView>();
-        }
-        else
-        {
-            _isOnMultiplayer = false;
-        }
-        
         _rb = GetComponent<Rigidbody>();
 
         // Сохраняем оригинальные настройки трения задних колёс
@@ -78,21 +62,25 @@ public class CarController : MonoBehaviour
 
     private void Update()
     {
-        if (_isOnMultiplayer && PhotonNetwork.IsConnected && !_photonView.IsMine)
+        // Если это не наша машина - выходим (не обрабатываем ввод), 
+        // но колёса всё равно визуально обновим.
+        if (!photonView.IsMine && PhotonNetwork.IsConnected)
         {
+            UpdateWheelVisuals(frontLeftWheelCollider,  frontLeftWheelTransform,  true);
+            UpdateWheelVisuals(frontRightWheelCollider, frontRightWheelTransform, true);
+            UpdateWheelVisuals(rearLeftWheelCollider,   rearLeftWheelTransform,   false);
+            UpdateWheelVisuals(rearRightWheelCollider,  rearRightWheelTransform,  false);
             return;
         }
 
         if (CanDrive)
         {
-            // --- 1) Получаем «мобильный» ввод ---
-            float verticalInput   = GetVerticalInput();   // газ / тормоз
+            float verticalInput   = GetVerticalInput();   // газ/тормоз
             float horizontalInput = GetHorizontalInput(); // поворот
 
-            // --- 2) Управляем машиной ---
             HandleMotor(verticalInput);
             HandleSteering(horizontalInput);
-            HandleBrakes();
+            HandleBrakes(verticalInput);
         }
         else
         {
@@ -106,7 +94,7 @@ public class CarController : MonoBehaviour
         // Дрифт (учёт времени дрифта)
         HandleDriftTimeCounting();
 
-        // Обновляем визуал колёс
+        // Обновляем визуал колёс (у локального игрока)
         UpdateWheelVisuals(frontLeftWheelCollider,  frontLeftWheelTransform,  true);
         UpdateWheelVisuals(frontRightWheelCollider, frontRightWheelTransform, true);
         UpdateWheelVisuals(rearLeftWheelCollider,   rearLeftWheelTransform,   false);
@@ -118,12 +106,12 @@ public class CarController : MonoBehaviour
     // --- Методы получения «мобильного» ввода ---
     float GetVerticalInput()
     {
-        // Газ
+        // Газ вперёд
         if (acceleratePressed && !brakePressed)
         {
             return 1f;
         }
-        // Тормоз
+        // Тормоз / Реверс
         else if (brakePressed && !acceleratePressed)
         {
             return -1f;
@@ -177,7 +165,7 @@ public class CarController : MonoBehaviour
             if (_rb.velocity.magnitude > autoSteerMinSpeed)
             {
                 Vector3 localVelocity = transform.InverseTransformDirection(_rb.velocity);
-                float autoSteer = -localVelocity.x * autoSteerSpeed;
+                float   autoSteer     = -localVelocity.x * autoSteerSpeed;
 
                 _currentSteerAngle = Mathf.Lerp(
                     _currentSteerAngle,
@@ -198,7 +186,7 @@ public class CarController : MonoBehaviour
         frontRightWheelCollider.steerAngle = _currentSteerAngle;
     }
 
-    private void HandleBrakes()
+    private void HandleBrakes(float verticalInput)
     {
         // Ручник => блокирует задние колёса
         if (handbrakePressed)
@@ -206,7 +194,7 @@ public class CarController : MonoBehaviour
             rearLeftWheelCollider.brakeTorque  = handbrakeForce;
             rearRightWheelCollider.brakeTorque = handbrakeForce;
 
-            // Чуть повышаем склонность к заносу
+            // Чуть снижаем сцепление
             AdjustDriftFriction(rearLeftWheelCollider,  _rearLeftOriginalFriction, 0.8f);
             AdjustDriftFriction(rearRightWheelCollider, _rearRightOriginalFriction, 0.8f);
         }
@@ -217,14 +205,15 @@ public class CarController : MonoBehaviour
 
             if (!_isDrifting)
             {
-                // Если не дрифтим, возвращаем заводское трение
                 ResetFriction(rearLeftWheelCollider,  _rearLeftOriginalFriction);
                 ResetFriction(rearRightWheelCollider, _rearRightOriginalFriction);
             }
         }
 
-        // Отдельно тормозим передние колёса при нажатой кнопке «тормоз»
-        if (brakePressed && !acceleratePressed)
+        // Торможение передними колёсами:
+        float forwardSpeed = Vector3.Dot(_rb.velocity, transform.forward);
+
+        if (verticalInput < 0f && forwardSpeed > 1f)
         {
             frontLeftWheelCollider.brakeTorque  = brakeForce;
             frontRightWheelCollider.brakeTorque = brakeForce;
@@ -247,7 +236,7 @@ public class CarController : MonoBehaviour
         else if (!_isDrifting && _wasDriftingLastFrame)
         {
             // Конец дрифта
-            float driftEndTime = Time.time;
+            float driftEndTime  = Time.time;
             float driftDuration = driftEndTime - _driftStartTime;
             OnDriftEvent?.Invoke(false, driftDuration);
         }
@@ -257,7 +246,7 @@ public class CarController : MonoBehaviour
     {
         WheelHit hit;
         float totalSlip = 0f;
-        int count = 0;
+        int   count     = 0;
 
         if (rearLeftWheelCollider.GetGroundHit(out hit))
         {
@@ -285,29 +274,20 @@ public class CarController : MonoBehaviour
         wheelCollider.sidewaysFriction = originalFriction;
     }
 
+    // -- Главное изменение: убираем двойное вращение, полагаемся на GetWorldPose
     private void UpdateWheelVisuals(WheelCollider collider, Transform wheelTransform, bool isFrontWheel)
     {
         if (wheelTransform == null) return;
 
         collider.GetWorldPose(out Vector3 pos, out Quaternion rot);
         wheelTransform.position = pos;
-
-        // Крутим колесо по вращению RPM
-        float rpm = collider.rpm;
-        if (Mathf.Abs(_rb.velocity.magnitude) < 0.05f)
-            rpm = 0f;
-
-        float rotationThisFrame = rpm * 6f * Time.deltaTime;
-        rot *= Quaternion.Euler(rotationThisFrame, 0f, 0f);
-
         wheelTransform.rotation = rot;
     }
 
     // --- КНОПКА ПЕРЕВОРОТА МАШИНЫ ---
     public void FlipCar()
     {
-        // Ставим машину обратно на колёса и обнуляем скорость
-        transform.position += Vector3.up * 1.5f; // приподнимаем
+        transform.position += Vector3.up * 1.5f;
         transform.rotation = Quaternion.Euler(0f, transform.rotation.eulerAngles.y, 0f);
 
         _rb.velocity        = Vector3.zero;

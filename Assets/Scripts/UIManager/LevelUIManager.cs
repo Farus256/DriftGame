@@ -4,7 +4,6 @@ using TMPro;
 
 public class LevelUIManager : MonoBehaviour
 {
-    // Singleton Instance
     public static LevelUIManager Instance { get; private set; }
     
     [Header("Buttons")]
@@ -13,9 +12,9 @@ public class LevelUIManager : MonoBehaviour
     [SerializeField] private Button loadPaidLevelButton2;
 
     [Header("Scene Names")] 
-    [SerializeField] private string freeLevelSceneName = "FreeLevel";
-    [SerializeField] private string paidLevelSceneName1 = "PaidLevel1";
-    [SerializeField] private string paidLevelSceneName2 = "PaidLevel2";
+    [SerializeField] private string freeLevelSceneName ;
+    [SerializeField] private string paidLevelSceneName1 ;
+    [SerializeField] private string paidLevelSceneName2;
     
     [Header("Level Costs")]
     [SerializeField] private float paidLevelCost1 = 500f;

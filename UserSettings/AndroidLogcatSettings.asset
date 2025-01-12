@@ -3,7 +3,7 @@
     "m_SelectedProcess": {
         "deviceId": "eu49dyucukfasscu",
         "name": "com.DefaultCompany.DriftGame2",
-        "processId": 18516,
+        "processId": 32057,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -18,18 +18,42 @@
             "deviceId": "eu49dyucukfasscu",
             "name": "com.DefaultCompany.DriftGame2",
             "processId": 10341,
-            "exited": false
+            "exited": true
         },
         {
             "deviceId": "eu49dyucukfasscu",
             "name": "com.DefaultCompany.DriftGame2",
             "processId": 17751,
-            "exited": false
+            "exited": true
         },
         {
             "deviceId": "eu49dyucukfasscu",
             "name": "com.DefaultCompany.DriftGame2",
             "processId": 18516,
+            "exited": true
+        },
+        {
+            "deviceId": "eu49dyucukfasscu",
+            "name": "com.DefaultCompany.DriftGame2",
+            "processId": 27742,
+            "exited": false
+        },
+        {
+            "deviceId": "eu49dyucukfasscu",
+            "name": "com.DefaultCompany.DriftGame2",
+            "processId": 29160,
+            "exited": false
+        },
+        {
+            "deviceId": "eu49dyucukfasscu",
+            "name": "com.DefaultCompany.DriftGame2",
+            "processId": 29676,
+            "exited": false
+        },
+        {
+            "deviceId": "eu49dyucukfasscu",
+            "name": "com.DefaultCompany.DriftGame2",
+            "processId": 32057,
             "exited": false
         }
     ],

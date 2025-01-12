@@ -34,10 +34,25 @@ public class PhotonUIManager : MonoBehaviourPunCallbacks
     public void OnMultiplayerButtonPressed()
     {
         CarStats chosenCar = menuCarSpawner.GetCurrentCarStats();
-        if (chosenCar != null) CarSelection.SelectedCarId = chosenCar.ID;
-        multiplayerPanel.SetActive(!multiplayerPanel.activeInHierarchy);
-        if(!PhotonNetwork.IsConnected) ConnectToPhoton();
+    
+        if (chosenCar != null)
+            CarSelection.SelectedCarId = chosenCar.ID;
+        
+        bool isNowActive = !multiplayerPanel.activeInHierarchy;
+        multiplayerPanel.SetActive(isNowActive);
+    
+        if (isNowActive)
+        {
+            if (!PhotonNetwork.IsConnected)
+                ConnectToPhoton();
+        }
+        else
+        {
+            if (PhotonNetwork.IsConnected)
+                PhotonNetwork.Disconnect();
+        }
     }
+
 
     private void ConnectToPhoton()
     {

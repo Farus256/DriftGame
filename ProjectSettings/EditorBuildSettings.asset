@@ -11,7 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MenuScene.unity
     guid: 03c233ad3c7c69d499538c3b2e85c7a4
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TestScene.unity
     guid: c850ee8c3b14cc8459e7e186857cf567
   - enabled: 1
@@ -20,6 +20,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Levels/Level1.unity
     guid: ba670fac290b2664da3310345b4ff7fe
+  - enabled: 1
+    path: Assets/Scenes/Levels/Level2.unity
+    guid: 6cb9dba8c4dd5d7428af4703c42910cd
+  - enabled: 1
+    path: Assets/Scenes/Levels/Level3.unity
+    guid: bb209f5c64c40a94b8feae236ed63e46
   m_configObjects:
     com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: cfbf153bcb0dc89499562e044871eb7a,
       type: 2}
