@@ -1,15 +1,18 @@
+using Photon.Realtime;
 using UnityEngine;
 using TMPro;
 
 public class GameUIManager : MonoBehaviour
 {
-    public static GameUIManager Instance { get; private set; }
+    private static GameUIManager Instance { get; set; }
     
-    public TMP_Text speedLabel;
-    public TMP_Text driftPointsLabel;
-    public TMP_Text timerLabel;
-    public TMP_Text rewardLabel;
-
+    [SerializeField] private TMP_Text speedLabel;
+    [SerializeField] private TMP_Text driftPointsLabel;
+    [SerializeField] private TMP_Text timerLabel;
+    [SerializeField] private TMP_Text rewardLabel;
+    
+    [SerializeField] private GameObject endGamePanel;
+    
     private GameController gameController;
 
     private void Awake()
@@ -26,7 +29,7 @@ public class GameUIManager : MonoBehaviour
     {
         gameController = GameController.Instance;
         if (gameController != null)
-            gameController.OnLevelEnd += UpdateRewardLabel;
+            gameController.OnLevelEnd += UpdateRewardPanel;
     }
 
     private void Update()
@@ -45,13 +48,31 @@ public class GameUIManager : MonoBehaviour
             speedLabel.text = $"Speed: {gameController.LocalPlayerCar.CurrentSpeedKmh:0.0} km/h";
     }
 
-    private void UpdateRewardLabel()
+    private void UpdateRewardPanel()
     {
+        if (!endGamePanel) return;
+        endGamePanel.SetActive(true);
+        
         if (!rewardLabel) return;
         rewardLabel.text = 
             $"Level Over!\n" +
             $"Drift Points: {gameController.DriftPoints:0}\n" +
             $"Reward: ${gameController.BaseReward}\n" +
-            "Press [D] to DOUBLE reward (watch ad)";
+            "Press to DOUBLE reward";
+    }
+
+    public void OnEndLevelButton(bool isDouble)
+    {
+        PlayerStats playerstats = PlayerDataManager.LoadPlayerStats();
+
+        if (isDouble)
+        {
+            Debug.Log("[GameUIManager] Showing Rewarded Ad...");
+            playerstats.AddMoney(GameController.Instance.BaseReward * 2);
+        }
+        
+        else playerstats.AddMoney(GameController.Instance.BaseReward);
+        
+        GlobalEventManager.TriggerLevelEnd();
     }
 }

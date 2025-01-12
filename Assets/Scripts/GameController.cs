@@ -44,7 +44,8 @@ public class GameController : MonoBehaviour
     {
         if (LevelOver)
         {
-            CheckForDoubleReward();
+            
+            //CheckForDoubleReward();
             return;
         }
 

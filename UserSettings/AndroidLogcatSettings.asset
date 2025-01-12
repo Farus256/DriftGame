@@ -1,9 +1,9 @@
 {
     "m_SelectedDeviceId": "eu49dyucukfasscu",
     "m_SelectedProcess": {
-        "deviceId": "",
-        "name": "",
-        "processId": 0,
+        "deviceId": "eu49dyucukfasscu",
+        "name": "com.DefaultCompany.DriftGame2",
+        "processId": 18516,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -12,6 +12,24 @@
             "deviceId": "eu49dyucukfasscu",
             "name": "org.telegram.messenger",
             "processId": 14580,
+            "exited": true
+        },
+        {
+            "deviceId": "eu49dyucukfasscu",
+            "name": "com.DefaultCompany.DriftGame2",
+            "processId": 10341,
+            "exited": false
+        },
+        {
+            "deviceId": "eu49dyucukfasscu",
+            "name": "com.DefaultCompany.DriftGame2",
+            "processId": 17751,
+            "exited": false
+        },
+        {
+            "deviceId": "eu49dyucukfasscu",
+            "name": "com.DefaultCompany.DriftGame2",
+            "processId": 18516,
             "exited": false
         }
     ],

@@ -610,6 +610,11 @@ MonoBehaviour:
   autoSteerSpeed: 2
   driftThreshold: 0.3
   autoSteerMinSpeed: 5
+  acceleratePressed: 0
+  brakePressed: 0
+  steerLeftPressed: 0
+  steerRightPressed: 0
+  handbrakePressed: 0
 --- !u!114 &2350469628269580950
 MonoBehaviour:
   m_ObjectHideFlags: 0
