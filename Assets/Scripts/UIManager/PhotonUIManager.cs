@@ -35,12 +35,12 @@ public class PhotonUIManager : MonoBehaviourPunCallbacks
     {
         CarStats chosenCar = menuCarSpawner.GetCurrentCarStats();
         if (chosenCar != null) CarSelection.SelectedCarId = chosenCar.ID;
-        ConnectToPhoton();
+        multiplayerPanel.SetActive(!multiplayerPanel.activeInHierarchy);
+        if(!PhotonNetwork.IsConnected) ConnectToPhoton();
     }
 
     private void ConnectToPhoton()
     {
-        multiplayerPanel.SetActive(true);
         statusText.text = "Connecting to Photon...";
         PhotonNetwork.ConnectUsingSettings();
         PhotonNetwork.AutomaticallySyncScene = true;

@@ -9,19 +9,25 @@ public class MenuUIManager : MonoBehaviour
     private const float CostMultiplier = 0.2f;
 
     [SerializeField] private MenuCarSpawner menuCarSpawner;
+    
+    [SerializeField] private TMP_Text goldText;
     [SerializeField] private TMP_Text moneyText;
     [SerializeField] private TMP_Text carNameLabel;
     [SerializeField] private TMP_Text massText;
     [SerializeField] private TMP_Text motorPowerText;
     [SerializeField] private TMP_Text brakeForceText;
-    [SerializeField] private Button upgradeMotorPowerButton;
-    [SerializeField] private Button upgradeBrakeForceButton;
+    [SerializeField] private TMP_Text carCostText;
     [SerializeField] private TMP_Text motorPowerUpgradeCostText;
     [SerializeField] private TMP_Text brakeForceUpgradeCostText;
+    
+    [SerializeField] private Button upgradeMotorPowerButton;
+    [SerializeField] private Button upgradeBrakeForceButton;
     [SerializeField] private Button buyCarButton;
     [SerializeField] private Button playButton;
-    [SerializeField] private TMP_Text carCostText;
+   
     [SerializeField] private GameObject settingsPanel;
+    [SerializeField] private GameObject shopPanel;
+    [SerializeField] private GameObject levelPanel;
 
     private PlayerStats playerStats;
     
@@ -40,14 +46,13 @@ public class MenuUIManager : MonoBehaviour
             upgradeBrakeForceButton.onClick.AddListener(OnUpgradeBrakeForce);
         if (buyCarButton)
             buyCarButton.onClick.AddListener(OnBuyCarButton);
-        if (playButton)
-            playButton.onClick.AddListener(OnPlayButton);
     }
 
     private void Start()
     {
         LoadPlayerStats();
         UpdateMoneyText();
+        UpdateGoldText();
         UpdateCarStatsUI();
     }
 
@@ -56,6 +61,7 @@ public class MenuUIManager : MonoBehaviour
         if (playerStats != null)
         {
             playerStats.OnMoneyChanged -= UpdateMoneyText;
+            playerStats.OnGoldChanged  -= UpdateGoldText;
         }
         
         if (upgradeMotorPowerButton)
@@ -84,6 +90,7 @@ public class MenuUIManager : MonoBehaviour
         if (playerStats != null)
         {
             playerStats.OnMoneyChanged += UpdateMoneyText;
+            playerStats.OnGoldChanged  += UpdateGoldText;
         }
     }
     
@@ -99,7 +106,21 @@ public class MenuUIManager : MonoBehaviour
     {
         if (playerStats != null) moneyText.text = $"Money: ${playerStats.Money:F2}";
     }
+    
+    public void UpdateGoldText(float currentGold)
+    {
+        if (goldText != null)
+        {
+            goldText.text = $"Gold: {currentGold:F2}";
+        }
+    }
 
+    public void UpdateGoldText()
+    {
+        if (playerStats != null && goldText != null)
+            goldText.text = $"Gold: {playerStats.Gold:F2}";
+    }
+    
     public void UpdateCarStatsUI()
     {
         if (playerStats == null) return;
@@ -119,12 +140,18 @@ public class MenuUIManager : MonoBehaviour
         massText.text = $"Mass: {currentCar.Mass} kg";
         motorPowerText.text = $"Motor Power: {currentCar.MotorPower}";
         brakeForceText.text = $"Brake Force: {currentCar.BrakeForce}";
+        
         float motorUpgradeCost = CalculateUpgradeCost(currentCar.MotorPower);
         float brakeUpgradeCost = CalculateUpgradeCost(currentCar.BrakeForce);
+        
         motorPowerUpgradeCostText.text = $"Upgrade Motor: ${motorUpgradeCost:F2}";
+        
         brakeForceUpgradeCostText.text = $"Upgrade Brakes: ${brakeUpgradeCost:F2}";
+        
         if (carCostText) carCostText.text = $"Cost: ${currentCar.Cost:F2}";
+        
         bool isCarOwned = playerStats.IsCarPurchased(currentCar.ID);
+        
         if (buyCarButton) buyCarButton.gameObject.SetActive(!isCarOwned);
         if (upgradeMotorPowerButton) upgradeMotorPowerButton.interactable = isCarOwned;
         if (upgradeBrakeForceButton) upgradeBrakeForceButton.interactable = isCarOwned;
@@ -139,6 +166,7 @@ public class MenuUIManager : MonoBehaviour
         brakeForceText.text = "Brake Force: -";
         motorPowerUpgradeCostText.text = "Upgrade Motor: -";
         brakeForceUpgradeCostText.text = "Upgrade Brakes: -";
+        
         if (carCostText) carCostText.text = "Cost: -";
         if (buyCarButton) buyCarButton.gameObject.SetActive(false);
         if (upgradeMotorPowerButton) upgradeMotorPowerButton.interactable = false;
@@ -155,30 +183,44 @@ public class MenuUIManager : MonoBehaviour
     {
         int selectedCarId = CarSelection.SelectedCarId;
         if (selectedCarId < 0) return;
+        
         CarStats currentCar = CarDataManager.GetCarStatsById(selectedCarId);
+        
         if (currentCar == null) return;
         if (playerStats.IsCarPurchased(currentCar.ID)) return;
         if (playerStats.Money < currentCar.Cost) return;
+        
         playerStats.AddMoney(-currentCar.Cost);
         playerStats.PurchaseCar(currentCar.ID);
+        
         PlayerDataManager.SavePlayerStats(playerStats);
         UpdateMoneyText();
+        UpdateGoldText();
         UpdateCarStatsUI();
+        TuningUIManager.Instance.RefreshUI();
     }
 
     private void OnUpgradeMotorPower()
     {
         int selectedCarId = CarSelection.SelectedCarId;
+        
         if (selectedCarId < 0) return;
+        
         CarStats currentCar = CarDataManager.GetCarStatsById(selectedCarId);
+        
         if (currentCar == null) return;
         float upgradeAmount = 100f;
         float upgradeCost = CalculateUpgradeCost(currentCar.MotorPower);
+        
         if (playerStats.Money < upgradeCost) return;
         playerStats.AddMoney(-upgradeCost);
+        
         PlayerDataManager.SavePlayerStats(playerStats);
+        
         UpdateMoneyText();
+        UpdateGoldText();
         currentCar.UpgradeMotorPower(upgradeAmount);
+        
         CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
         UpdateCarStatsUI();
     }
@@ -186,16 +228,23 @@ public class MenuUIManager : MonoBehaviour
     private void OnUpgradeBrakeForce()
     {
         int selectedCarId = CarSelection.SelectedCarId;
+        
         if (selectedCarId < 0) return;
+        
         CarStats currentCar = CarDataManager.GetCarStatsById(selectedCarId);
+        
         if (currentCar == null) return;
         float upgradeAmount = 100f;
         float upgradeCost = CalculateUpgradeCost(currentCar.BrakeForce);
+        
         if (playerStats.Money < upgradeCost) return;
         playerStats.AddMoney(-upgradeCost);
+        
         PlayerDataManager.SavePlayerStats(playerStats);
+        
         UpdateMoneyText();
         currentCar.UpgradeBrakeForce(upgradeAmount);
+        
         CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
         UpdateCarStatsUI();
     }
@@ -222,17 +271,32 @@ public class MenuUIManager : MonoBehaviour
         UpdateCarStatsUI();
     }
 
-    private void OnPlayButton()
+    public void OnPlayButton()
     {
         int selectedCarId = CarSelection.SelectedCarId;
         if (selectedCarId < 0) return;
+        
         CarStats chosenCar = CarDataManager.GetCarStatsById(selectedCarId);
+        
         if (chosenCar == null) return;
         if (!playerStats.IsCarPurchased(chosenCar.ID)) return;
+        
         CarSelection.SelectCar(chosenCar.ID);
-        GlobalEventManager.TriggerLevelStart();
+
+        levelPanel.SetActive(!levelPanel.activeSelf);
+
+        // GlobalEventManager.TriggerLevelStart();
     }
 
+    public void OnShopButton()
+    {
+        shopPanel.SetActive(!shopPanel.activeSelf);
+    }
+
+    public void OnLevelCloseButton()
+    {
+        levelPanel.SetActive(!levelPanel.activeSelf);
+    }
     public void OnExitButton()
     {
         Application.Quit();

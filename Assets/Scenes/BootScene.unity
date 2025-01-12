@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainMenuSceneName: MenuScene
-  gameSceneName: TestScene
+  gameSceneName: Level1
 --- !u!4 &771384798
 Transform:
   m_ObjectHideFlags: 0

@@ -8,14 +8,17 @@ public class TuningUIManager : MonoBehaviour
 
     [SerializeField] private MenuCarSpawner menuCarSpawner;
     [SerializeField] private MenuUIManager menuUIManager;
+
+    [Header("Buttons")]
     [SerializeField] private Button spoilerButton;
     [SerializeField] private Button sideSkirtsButton;
     [SerializeField] private Button paintRedButton;
     [SerializeField] private Button paintBlueButton;
     [SerializeField] private Button paintDefaultButton;
 
-    [SerializeField] private float extraPartCost = 500f;
-    [SerializeField] private float paintCost = 300f;
+    [Header("Tuning Costs (GOLD)")]
+    [SerializeField] private float extraPartGoldCost = 50f;
+    [SerializeField] private float paintGoldCost = 30f;
 
     private const string STANDARD_COLOR_HEX = "#FFFFFF";
     private const string DEFAULT_COLOR_HEX = "#CCCCCC";
@@ -36,7 +39,10 @@ public class TuningUIManager : MonoBehaviour
         playerStats = PlayerDataManager.LoadPlayerStats();
         if (playerStats != null)
         {
+            // Подписываемся не только на OnMoneyChanged, но и на OnGoldChanged,
+            // если вдруг нужно обновлять какие-то элементы UI, зависящие от золота.
             playerStats.OnMoneyChanged += OnMoneyChanged;
+            playerStats.OnGoldChanged  += OnGoldChanged;
         }
         RefreshUI();
     }
@@ -52,6 +58,7 @@ public class TuningUIManager : MonoBehaviour
         if (playerStats != null)
         {
             playerStats.OnMoneyChanged -= OnMoneyChanged;
+            playerStats.OnGoldChanged  -= OnGoldChanged;
         }
     }
 
@@ -92,7 +99,7 @@ public class TuningUIManager : MonoBehaviour
         {
             buttonText.text = isActive
                 ? $"{partName} (Installed)"
-                : $"{partName} (${extraPartCost})";
+                : $"{partName} ({extraPartGoldCost} Gold)";
         }
         button.interactable = true;
     }
@@ -113,13 +120,21 @@ public class TuningUIManager : MonoBehaviour
         TMP_Text bt = button.GetComponentInChildren<TMP_Text>();
         if (bt)
         {
-            bt.text = isApplied
-                ? $"{colorName} (Applied)"
-                : isFree ? $"{colorName} (Free)" : $"{colorName} (${paintCost})";
+            if (isApplied)
+            {
+                bt.text = $"{colorName} (Applied)";
+            }
+            else
+            {
+                bt.text = isFree
+                    ? $"{colorName} (Free)"
+                    : $"{colorName} ({paintGoldCost} Gold)";
+            }
         }
         button.interactable = !isApplied;
     }
 
+    // ----- SPOILER -----
     public void OnButtonSpoilerToggle()
     {
         ToggleExtraPart("Spoiler");
@@ -148,13 +163,13 @@ public class TuningUIManager : MonoBehaviour
         }
         else
         {
-            if (playerStats.Money < extraPartCost) return;
-
-            playerStats.AddMoney(-extraPartCost);
+            if (playerStats.Gold < extraPartGoldCost) return;
+            
+            playerStats.AddGold(-extraPartGoldCost);
             PlayerDataManager.SavePlayerStats(playerStats);
-
-            // Обновляем отображение денег
+            
             MenuUIManager.Instance.UpdateMoneyText();
+            MenuUIManager.Instance.UpdateGoldText();
 
             carStats.ActivateExtraPart(partName);
             CarDataManager.SaveAllCarStats(menuCarSpawner.GetAllCarStats());
@@ -163,6 +178,7 @@ public class TuningUIManager : MonoBehaviour
         GlobalEventManager.TriggerCarUpdated();
     }
 
+    // ----- PAINT -----
     public void OnButtonPaintRed()
     {
         ApplyPaint("#FF0000", false);
@@ -190,20 +206,18 @@ public class TuningUIManager : MonoBehaviour
 
         CarStats carStats = CarDataManager.GetCarStatsById(selectedCarId);
         if (carStats == null) return;
-
         if (!playerStats.IsCarPurchased(carStats.ID)) return;
-
         if (carStats.PaintColor == colorHex) return;
-
+        
         if (!isFree)
         {
-            if (playerStats.Money < paintCost) return;
+            if (playerStats.Gold < paintGoldCost) return;
 
-            playerStats.AddMoney(-paintCost);
+            playerStats.AddGold(-paintGoldCost);
             PlayerDataManager.SavePlayerStats(playerStats);
 
-            // Обновляем отображение денег
             MenuUIManager.Instance.UpdateMoneyText();
+            MenuUIManager.Instance.UpdateGoldText();
         }
 
         carStats.SetPaintColor(colorHex);
@@ -232,9 +246,14 @@ public class TuningUIManager : MonoBehaviour
             }
         }
     }
-
+    
     private void OnMoneyChanged(float currentMoney)
     {
         MenuUIManager.Instance.UpdateMoneyText(currentMoney);
+    }
+    
+    private void OnGoldChanged(float currentGold)
+    {
+        MenuUIManager.Instance.UpdateGoldText(currentGold);
     }
 }

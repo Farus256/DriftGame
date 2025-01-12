@@ -72,7 +72,7 @@ public static class PlayerDataManager
 
     private static PlayerStats CreateAndCacheDefaultPlayerStats()
     {
-        cachedPlayerStats = new PlayerStats("DefaultPlayer", 1000f, 1);
+        cachedPlayerStats = new PlayerStats("DefaultPlayer", 10000f, 1, 100);
         return cachedPlayerStats;
     }
 }

@@ -1,6 +1,6 @@
 using System;
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 [System.Serializable]
 public class PlayerStats
@@ -8,9 +8,15 @@ public class PlayerStats
     [SerializeField] private string playerName;
     public string PlayerName => playerName;
 
+    // ----- MONEY -----
     [SerializeField] private float money;
     public float Money => money;
 
+    // ----- GOLD (New Currency) -----
+    [SerializeField] private float gold;
+    public float Gold => gold;
+
+    // --------------------------------
     [SerializeField] private float totalDriftPoints;
     public float TotalDriftPoints => totalDriftPoints;
 
@@ -20,23 +26,35 @@ public class PlayerStats
     [SerializeField] private List<int> purchasedCars = new List<int>();
     public List<int> PurchasedCars => purchasedCars;
 
+    // События при изменении денежных средств
     public event Action<float> OnMoneyChanged;
+    // Новое событие при изменении золота
+    public event Action<float> OnGoldChanged;
+
     public PlayerStats() { }
-    
-    public PlayerStats(string playerName, float initialMoney, int initialLevel)
+
+    public PlayerStats(string playerName, float initialMoney, int initialLevel, float gold)
     {
         this.playerName = playerName;
         this.money = initialMoney;
+        this.gold = gold;
         totalDriftPoints = 0f;
         level = initialLevel;
         purchasedCars = new List<int>();
     }
-
+    
     public void AddMoney(float amount)
     {
         Debug.Log($"Adding money {amount}");
         money += amount;
         OnMoneyChanged?.Invoke(Money);
+    }
+    
+    public void AddGold(float amount)
+    {
+        Debug.Log($"Adding gold {amount}");
+        gold += amount;
+        OnGoldChanged?.Invoke(Gold);
     }
 
     public void AddDriftPoints(float amount)
