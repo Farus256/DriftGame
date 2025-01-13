@@ -1,10 +1,12 @@
 using UnityEngine;
 using Photon.Pun;
+using System;
 
 public class GameController : MonoBehaviour
 {
     public static GameController Instance { get; private set; }
 
+    [Header("Game Settings")]
     public float LevelDuration = 120f;
     public float DriftPoints { get; private set; }
     public float BaseReward { get; private set; }
@@ -25,27 +27,43 @@ public class GameController : MonoBehaviour
         }
 
         Instance = this;
+
+        // Подписываемся на событие спавна локального автомобиля в мультиплеере
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        {
+            MultiPlayerCarSpawner.OnLocalCarSpawned += HandleLocalCarSpawned;
+        }
+        else
+        {
+            // Подписываемся на событие спавна автомобиля в однопользовательском режиме
+            GameCarSpawner.OnSinglePlayerCarSpawned += HandleSinglePlayerCarSpawned;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        {
+            // Отписываемся от события при уничтожении объекта в мультиплеере
+            MultiPlayerCarSpawner.OnLocalCarSpawned -= HandleLocalCarSpawned;
+        }
+        else
+        {
+            // Отписываемся от события при уничтожении объекта в однопользовательском режиме
+            GameCarSpawner.OnSinglePlayerCarSpawned -= HandleSinglePlayerCarSpawned;
+        }
     }
 
     private void Start()
     {
         ResetGame();
-        FindLocalPlayerCar();
-    }
-
-    public void ResetGame()
-    {
-        _timeLeft = LevelDuration;
-        DriftPoints = 0f;
-        LevelOver = false;
     }
 
     private void Update()
     {
         if (LevelOver)
         {
-            
-            //CheckForDoubleReward();
+            // Здесь можно добавить логику для окончания уровня (например, показать UI)
             return;
         }
 
@@ -65,88 +83,75 @@ public class GameController : MonoBehaviour
         }
     }
 
-    private void FindLocalPlayerCar()
+    /// <summary>
+    /// Обработка спавна локального автомобиля в мультиплеере
+    /// </summary>
+    /// <param name="localCar">Заспавненный локальный автомобиль</param>
+    private void HandleLocalCarSpawned(GameObject localCar)
     {
-        GameObject[] playerCars = GameObject.FindGameObjectsWithTag("Player");
-        foreach (GameObject car in playerCars)
-        {
-            // Для мультиплеера проверяем PhotonView
-            if (PhotonNetwork.IsConnectedAndReady)
-            {
-                var photonView = car.GetComponent<PhotonView>();
-                if (photonView != null && photonView.IsMine)
-                {
-                    AssignLocalPlayerCar(car);
-                    return;
-                }
-            }
-            else
-            {
-                // В синглплеере берём первую найденную машину
-                AssignLocalPlayerCar(car);
-                return;
-            }
-        }
-        Debug.LogWarning("[GameController] Local player car not found!");
+        AssignLocalPlayerCar(localCar);
     }
 
+    /// <summary>
+    /// Обработка спавна автомобиля в однопользовательском режиме
+    /// </summary>
+    /// <param name="car">Заспавненный автомобиль</param>
+    private void HandleSinglePlayerCarSpawned(GameObject car)
+    {
+        AssignLocalPlayerCar(car);
+    }
+
+    /// <summary>
+    /// Назначение CarController из переданного объекта автомобиля
+    /// </summary>
+    /// <param name="car">Объект автомобиля</param>
     private void AssignLocalPlayerCar(GameObject car)
     {
         LocalPlayerCar = car.GetComponent<CarController>();
         if (LocalPlayerCar == null)
         {
-            Debug.LogWarning($"[GameController] CarController not found on: {car.name}");
+            Debug.LogWarning($"[GameController] CarController не найден на объекте: {car.name}");
+        }
+        else
+        {
+            Debug.Log($"[GameController] Локальный автомобиль назначен: {car.name}");
         }
     }
 
+    /// <summary>
+    /// Возвращает оставшееся время уровня
+    /// </summary>
+    /// <returns>Оставшееся время в секундах</returns>
     public float GetTimeLeft()
     {
         return _timeLeft;
     }
 
+    /// <summary>
+    /// Сброс параметров игры
+    /// </summary>
+    public void ResetGame()
+    {
+        _timeLeft = LevelDuration;
+        DriftPoints = 0f;
+        LevelOver = false;
+    }
+
+    /// <summary>
+    /// Завершение уровня
+    /// </summary>
     private void EndLevel()
     {
-        
         LevelOver = true;
         BaseReward = Mathf.Floor(DriftPoints / 10f);
-        
-        LocalPlayerCar.CanDrive = false;
-        OnLevelEnd?.Invoke();
-        
-    }
 
-    private void CheckForDoubleReward()
-    {
-        if (Input.GetKeyDown(KeyCode.D))
+        if (LocalPlayerCar != null)
         {
-            // // if (IronSource.Agent.isRewardedVideoAvailable())
-            // // {
-            // //     Debug.Log("[GameUIManager] Showing Rewarded Ad...");
-            // //     // IronSource.Agent.showRewardedVideo();
-            // //     
-            // //     UpdatePlayerMoney(BaseReward *= 2);
-            // // }
-            // else
-            // {
-            //     Debug.Log("[GameUIManager] Rewarded Ad not available.");
-            //     UpdatePlayerMoney(BaseReward);
-            // }
+            LocalPlayerCar.CanDrive = false;
         }
-    }
 
-    private void UpdatePlayerMoney(float reward)
-    {
-        // Загружаем текущие данные игрока
-        PlayerStats stats = PlayerDataManager.LoadPlayerStats();
+        OnLevelEnd?.Invoke();
 
-        // Добавляем награду к текущему балансу
-        stats.AddMoney(reward);
-
-        // Сохраняем обновлённые данные
-        PlayerDataManager.SavePlayerStats(stats);
-
-        Debug.Log($"[GameController] Player money updated: +${reward}. Total: ${stats.Money}");
-        
-        GlobalEventManager.TriggerLevelEnd();
+        // Здесь можно добавить логику награждения, перехода на следующий уровень и т.д.
     }
 }

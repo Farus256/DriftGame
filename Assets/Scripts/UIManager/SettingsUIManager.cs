@@ -65,16 +65,4 @@ public class SettingsUIManager : MonoBehaviour
         // AudioMixer.SetFloat("SFXVolume", Mathf.Log10(value) * 20f);
         Debug.Log($"[SettingsMenu] SFX Volume set to {value}");
     }
-
-    public void OnExitButton()
-    {
-        // Кнопка «Выйти» из игры:
-        Application.Quit();
-    }
-
-    // Или кнопка «Назад в меню»:
-    public void OnBackToMainMenu()
-    {
-        // SceneManager.LoadScene("MainMenu");
-    }
 }

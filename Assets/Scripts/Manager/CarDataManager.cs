@@ -76,9 +76,9 @@ public static class CarDataManager
         {
             ""id"": 1,
             ""carName"": ""Drift King"",
-            ""mass"": 1000,
+            ""mass"": 800,
             ""motorPower"": 2000,
-            ""brakeForce"": 2500,
+            ""brakeForce"": 4000,
             ""prefabName"": ""Samurai_Green_A"",
             ""availableExtraParts"": [""Spoiler"", ""SideSkirts""],
             ""activeExtraParts"": [],
@@ -88,9 +88,9 @@ public static class CarDataManager
         {
             ""id"": 2,
             ""carName"": ""Samurai Blue"",
-            ""mass"": 1200,
+            ""mass"": 700,
             ""motorPower"": 1600,
-            ""brakeForce"": 2000,
+            ""brakeForce"": 3500,
             ""prefabName"": ""Samurai_Blue_A"",
             ""availableExtraParts"": [""Spoiler"", ""SideSkirts""],
             ""activeExtraParts"": [],

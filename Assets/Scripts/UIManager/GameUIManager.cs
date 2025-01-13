@@ -1,3 +1,4 @@
+using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 using TMPro;
@@ -13,7 +14,11 @@ public class GameUIManager : MonoBehaviour
     
     [SerializeField] private GameObject endGamePanel;
     
+    [SerializeField] private IronSourceLevelPlayManager ironSourceManager;
+    
     private GameController gameController;
+
+    private bool shouldDoubleReward = false;
 
     private void Awake()
     {
@@ -30,6 +35,18 @@ public class GameUIManager : MonoBehaviour
         gameController = GameController.Instance;
         if (gameController != null)
             gameController.OnLevelEnd += UpdateRewardPanel;
+        
+        if (ironSourceManager == null)
+        {
+            ironSourceManager = FindObjectOfType<IronSourceLevelPlayManager>();
+            if (ironSourceManager == null)
+            {
+                Debug.LogError("IronSourceLevelPlayManager не найден в сцене.");
+            }
+        }
+
+        // Подписка на глобальное событие награждения
+        GlobalEventManager.OnRewardedVideoCompleted += HandleRewarded;
     }
 
     private void Update()
@@ -61,18 +78,66 @@ public class GameUIManager : MonoBehaviour
             "Press to DOUBLE reward";
     }
 
+    /// <summary>
+    /// Метод, вызываемый при нажатии кнопки завершения уровня
+    /// </summary>
+    /// <param name="isDouble">Должна ли быть награда удвоена</param>
     public void OnEndLevelButton(bool isDouble)
+    {
+        if (isDouble)
+        {
+            Debug.Log("[GameUIManager] Showing Rewarded Ad...");
+            shouldDoubleReward = true;
+            ironSourceManager.ShowRewardedVideo();
+            // Не добавляем деньги здесь, ждем события награждения
+        }
+        else
+        {
+            RewardPlayer(false);
+        }
+    }
+
+    /// <summary>
+    /// Обработка события награждения после просмотра рекламы
+    /// </summary>
+    void HandleRewarded()
+    {
+        RewardPlayer(shouldDoubleReward);
+        shouldDoubleReward = false;
+    }
+
+    /// <summary>
+    /// Метод для награждения игрока
+    /// </summary>
+    /// <param name="isDouble">Должна ли быть награда удвоена</param>
+    void RewardPlayer(bool isDouble)
     {
         PlayerStats playerstats = PlayerDataManager.LoadPlayerStats();
 
         if (isDouble)
         {
-            Debug.Log("[GameUIManager] Showing Rewarded Ad...");
             playerstats.AddMoney(GameController.Instance.BaseReward * 2);
+            Debug.Log("Награда удвоена после просмотра рекламы.");
         }
-        
-        else playerstats.AddMoney(GameController.Instance.BaseReward);
+        else
+        {
+            playerstats.AddMoney(GameController.Instance.BaseReward);
+        }
+
+        if(PhotonNetwork.IsConnected) PhotonNetwork.Disconnect();
         
         GlobalEventManager.TriggerLevelEnd();
+    }
+
+    void OnDestroy()
+    {
+        // Отписка от глобального события награждения
+        GlobalEventManager.OnRewardedVideoCompleted -= HandleRewarded;
+
+        // Отписка от события окончания уровня, если необходимо
+        if (gameController != null)
+        {
+            gameController.OnLevelEnd -= UpdateRewardPanel;
+        }
     }
 }

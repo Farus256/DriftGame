@@ -529,6 +529,7 @@ GameObject:
   - component: {fileID: 2350469628269580950}
   - component: {fileID: 2253024745938598361}
   - component: {fileID: -8051286392799027639}
+  - component: {fileID: -5791297538605922043}
   m_Layer: 0
   m_Name: Samurai_Green_A
   m_TagString: Player
@@ -603,13 +604,14 @@ MonoBehaviour:
   rearLeftWheelTransform: {fileID: 9102473396435809318}
   rearRightWheelTransform: {fileID: 5522088464764837296}
   motorPower: 700
-  maxSteerAngle: 25
+  maxSteerAngle: 30
   brakeForce: 1000
   handbrakeForce: 3000
   driftFactor: 1
-  autoSteerSpeed: 2
+  autoSteerSpeed: 10
   driftThreshold: 0.3
   autoSteerMinSpeed: 5
+  CanDrive: 1
   acceleratePressed: 0
   brakePressed: 0
   steerLeftPressed: 0
@@ -671,6 +673,18 @@ MonoBehaviour:
   m_SynchronizeAngularVelocity: 1
   m_TeleportEnabled: 0
   m_TeleportIfDistanceGreaterThan: 3
+--- !u!114 &-5791297538605922043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3225874551983908691}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05303d555d6dcc24ab9926cdcaa227af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3263149667454813771
 GameObject:
   m_ObjectHideFlags: 0

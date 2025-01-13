@@ -1,21 +1,41 @@
 using UnityEngine;
 using Photon.Pun;
+using System;
 using System.Collections.Generic;
+using Random = UnityEngine.Random;
 
-public class MultiPlayerCarSpawner : MonoBehaviour
+public class MultiPlayerCarSpawner : MonoBehaviourPun
 {
     [SerializeField] private Transform[] spawnPoints;
+    public static event Action<GameObject> OnLocalCarSpawned;
 
     private void Start()
     {
-        if (!PhotonNetwork.IsConnectedAndReady || !PhotonNetwork.InRoom) return;
+        if (!PhotonNetwork.IsConnectedAndReady || !PhotonNetwork.InRoom)
+        {
+            Debug.LogWarning("[MultiPlayerCarSpawner] PhotonNetwork не готов или не в комнате.");
+            return;
+        }
         SpawnPlayerCar();
     }
 
     private void SpawnPlayerCar()
     {
+        if (spawnPoints.Length == 0)
+        {
+            Debug.LogError("[MultiPlayerCarSpawner] Нет доступных точек спавна!");
+            return;
+        }
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-        if (CarSelection.SelectedCarId < 0) return;
+
+        // Проверяем, выбран ли автомобиль
+        if (CarSelection.SelectedCarId < 0)
+        {
+            Debug.LogError("[MultiPlayerCarSpawner] CarSelection.SelectedCarId не выбран!");
+            return;
+        }
+
+        // Находим описание выбранного авто
         CarStats[] allCars = CarDataManager.LoadAllCarStats();
         CarStats selectedCar = null;
         foreach (CarStats car in allCars)
@@ -26,25 +46,74 @@ public class MultiPlayerCarSpawner : MonoBehaviour
                 break;
             }
         }
-        if (selectedCar == null) return;
-        string prefabPath = $"CarPrefabs/{selectedCar.PrefabName}";
-        GameObject playerCar = PhotonNetwork.Instantiate(prefabPath, spawnPoint.position, spawnPoint.rotation, 0);
-        var pv = playerCar.GetComponent<PhotonView>();
-        if (pv && pv.IsMine)
+        if (selectedCar == null)
         {
+            Debug.LogError($"[MultiPlayerCarSpawner] Автомобиль с ID {CarSelection.SelectedCarId} не найден!");
+            return;
+        }
+
+        // Готовим InstantiationData
+        string prefabPath = $"CarPrefabs/{selectedCar.PrefabName}";
+        int carID = selectedCar.ID;
+        string paintColorHex = selectedCar.PaintColor;
+        string[] activePartsArr = selectedCar.ActiveExtraParts.ToArray();
+
+        object[] instantiationData = new object[]
+        {
+            carID,
+            paintColorHex,
+            activePartsArr
+        };
+
+        // Спавним автомобиль с дополнительными данными
+        GameObject playerCar = PhotonNetwork.Instantiate(
+            prefabPath,
+            spawnPoint.position,
+            spawnPoint.rotation,
+            0,
+            instantiationData // <-- передаём!
+        );
+
+        if (playerCar == null)
+        {
+            Debug.LogError($"[MultiPlayerCarSpawner] Не удалось заспавнить автомобиль по пути {prefabPath}.");
+            return;
+        }
+
+        var pv = playerCar.GetComponent<PhotonView>();
+        if (pv == null)
+        {
+            Debug.LogError($"[MultiPlayerCarSpawner] PhotonView отсутствует на {playerCar.name}.");
+            return;
+        }
+
+        if (pv.IsMine)
+        {
+            // Применяем параметры (мощность, масса и т.д.) — 
+            //   либо передаём их тоже через InstantiationData, 
+            //   либо делаем локально:
             ApplyCarParameters(playerCar, selectedCar);
-            ApplyPaintColor(playerCar, selectedCar.PaintColor);
-            ApplyExtraParts(playerCar, selectedCar.ActiveExtraParts);
+
+            // Ставим тег "Player"
+            playerCar.tag = "Player";
+
+            // Уведомляем, что локальная машина создана
+            OnLocalCarSpawned?.Invoke(playerCar);
         }
         else
         {
+            // Если это не наша машина — отключаем локальный контроллер
             var controller = playerCar.GetComponent<CarController>();
-            if (controller) controller.enabled = false;
+            if (controller)
+            {
+                controller.enabled = false;
+            }
         }
     }
 
     private void ApplyCarParameters(GameObject car, CarStats stats)
     {
+        // То же, что раньше
         CarController controller = car.GetComponent<CarController>();
         if (controller)
         {
@@ -52,35 +121,9 @@ public class MultiPlayerCarSpawner : MonoBehaviour
             controller.brakeForce = stats.BrakeForce;
         }
         Rigidbody rb = car.GetComponent<Rigidbody>();
-        if (rb) rb.mass = stats.Mass;
-    }
-
-    private void ApplyPaintColor(GameObject car, string colorHex)
-    {
-        if (ColorUtility.TryParseHtmlString(colorHex, out Color newColor))
+        if (rb)
         {
-            Renderer[] renderers = car.GetComponentsInChildren<Renderer>();
-            foreach (Renderer rend in renderers)
-            {
-                for (int i = 0; i < rend.materials.Length; i++)
-                {
-                    rend.materials[i].color = newColor;
-                }
-            }
-        }
-    }
-
-    private void ApplyExtraParts(GameObject car, List<string> activeParts)
-    {
-        string[] possibleParts = { "Spoiler", "SideSkirts" };
-        foreach (string partName in possibleParts)
-        {
-            Transform partTransform = car.transform.Find(partName);
-            if (partTransform)
-            {
-                bool isActive = activeParts.Contains(partName);
-                partTransform.gameObject.SetActive(isActive);
-            }
+            rb.mass = stats.Mass;
         }
     }
 }

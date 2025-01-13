@@ -132,7 +132,7 @@ public class PhotonUIManager : MonoBehaviourPunCallbacks
             statusText.text = "Room name is empty!";
             return;
         }
-        RoomOptions options = new RoomOptions { MaxPlayers = 2, IsVisible = true, IsOpen = true };
+        RoomOptions options = new RoomOptions { MaxPlayers = 5, IsVisible = true, IsOpen = true };
         PhotonNetwork.CreateRoom(roomNameInput.text, options, TypedLobby.Default);
     }
 

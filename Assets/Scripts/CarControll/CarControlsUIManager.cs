@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Photon.Pun;
+using System;
 
 public class CarControlsUIManager : MonoBehaviour
 {
@@ -18,33 +20,81 @@ public class CarControlsUIManager : MonoBehaviour
 
     private void Awake()
     {
-        // При необходимости, вы можете оставить активацию UI 
-        // или вовсе убрать этот метод, если UI не надо скрывать.
+        // Активируем мобильный UI, если он назначен
         if (mobileUIRoot != null)
             mobileUIRoot.SetActive(true);
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        // Находим объект игрока и его CarController
-        GameObject player = GameObject.FindWithTag("Player");
-        if (player != null)
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            carController = player.GetComponent<CarController>();
-            if (carController == null)
-            {
-                Debug.LogError("CarController not found on Player object!");
-            }
+            // Подписываемся на событие спавна локального автомобиля в мультиплеере
+            MultiPlayerCarSpawner.OnLocalCarSpawned += HandleLocalCarSpawned;
         }
         else
         {
-            Debug.LogError("Player object not found in the scene!");
+            // Подписываемся на событие спавна автомобиля в однопользовательском режиме
+            GameCarSpawner.OnSinglePlayerCarSpawned += HandleSinglePlayerCarSpawned;
         }
+    }
 
-        // Подключаем кнопки через код
+    private void OnDisable()
+    {
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        {
+            // Отписываемся от события при отключении в мультиплеере
+            MultiPlayerCarSpawner.OnLocalCarSpawned -= HandleLocalCarSpawned;
+        }
+        else
+        {
+            // Отписываемся от события при отключении в однопользовательском режиме
+            GameCarSpawner.OnSinglePlayerCarSpawned -= HandleSinglePlayerCarSpawned;
+        }
+    }
+
+    private void Start()
+    {
         SetupButtonListeners();
     }
 
+    /// <summary>
+    /// Обработка спавна локального автомобиля в мультиплеере
+    /// </summary>
+    /// <param name="localCar">Заспавненный локальный автомобиль</param>
+    private void HandleLocalCarSpawned(GameObject localCar)
+    {
+        AssignCarController(localCar);
+    }
+
+    /// <summary>
+    /// Обработка спавна автомобиля в однопользовательском режиме
+    /// </summary>
+    /// <param name="car">Заспавненный автомобиль</param>
+    private void HandleSinglePlayerCarSpawned(GameObject car)
+    {
+        AssignCarController(car);
+    }
+
+    /// <summary>
+    /// Назначение CarController из переданного объекта автомобиля
+    /// </summary>
+    /// <param name="car">Объект автомобиля</param>
+    private void AssignCarController(GameObject car)
+    {
+        carController = car.GetComponent<CarController>();
+        if (carController == null)
+        {
+            Debug.LogError($"[CarControlsUIManager] CarController не найден на объекте: {car.name}");
+            return;
+        }
+
+        Debug.Log($"[CarControlsUIManager] CarController назначен на: {car.name}");
+    }
+
+    /// <summary>
+    /// Настройка слушателей для UI кнопок
+    /// </summary>
     private void SetupButtonListeners()
     {
         if (accelerateButton != null)
@@ -83,6 +133,12 @@ public class CarControlsUIManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Добавление EventTrigger к кнопке
+    /// </summary>
+    /// <param name="target">Кнопка</param>
+    /// <param name="eventTriggerType">Тип события</param>
+    /// <param name="action">Действие при событии</param>
     private void AddEventTrigger(GameObject target, EventTriggerType eventTriggerType, UnityEngine.Events.UnityAction action)
     {
         EventTrigger trigger = target.GetComponent<EventTrigger>();

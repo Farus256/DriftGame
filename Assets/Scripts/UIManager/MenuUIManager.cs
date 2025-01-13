@@ -24,7 +24,8 @@ public class MenuUIManager : MonoBehaviour
     [SerializeField] private Button upgradeBrakeForceButton;
     [SerializeField] private Button buyCarButton;
     [SerializeField] private Button playButton;
-   
+    [SerializeField] private Button multiplayerButton;
+    
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private GameObject shopPanel;
     [SerializeField] private GameObject levelPanel;
@@ -153,9 +154,11 @@ public class MenuUIManager : MonoBehaviour
         bool isCarOwned = playerStats.IsCarPurchased(currentCar.ID);
         
         if (buyCarButton) buyCarButton.gameObject.SetActive(!isCarOwned);
+        if (carCostText) carCostText.gameObject.SetActive(!isCarOwned);
         if (upgradeMotorPowerButton) upgradeMotorPowerButton.interactable = isCarOwned;
         if (upgradeBrakeForceButton) upgradeBrakeForceButton.interactable = isCarOwned;
         if (playButton) playButton.interactable = isCarOwned;
+        if (multiplayerButton) multiplayerButton.interactable = isCarOwned;
     }
 
     private void ClearCarStatsUI()
@@ -172,6 +175,7 @@ public class MenuUIManager : MonoBehaviour
         if (upgradeMotorPowerButton) upgradeMotorPowerButton.interactable = false;
         if (upgradeBrakeForceButton) upgradeBrakeForceButton.interactable = false;
         if (playButton) playButton.interactable = false;
+        if (multiplayerButton) multiplayerButton.interactable = false;
     }
 
     private float CalculateUpgradeCost(float currentValue)
