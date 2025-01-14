@@ -17,8 +17,12 @@
 - Плохо откалиброванные характеристики машин 
 
 В проекте были использованы такие ассеты:
+
 Kajaman's Roads – Free 
 (https://assetstore.unity.com/packages/3d/environments/roadways/kajaman-s-roads-free-52628)
+
 Simple Garage 
 (https://assetstore.unity.com/packages/3d/props/interior/simple-garage-197251)
+
 ICONIC: Low Poly Sports Car FREE Vol 
+(https://assetstore.unity.com/packages/3d/vehicles/land/iconic-low-poly-sports-car-free-vol-02-281765)
