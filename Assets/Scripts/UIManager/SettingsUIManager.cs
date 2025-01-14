@@ -22,8 +22,7 @@ public class SettingsUIManager : MonoBehaviour
         if (masterVolumeSlider) masterVolumeSlider.value = masterVol;
         if (musicVolumeSlider)  musicVolumeSlider.value  = musicVol;
         if (sfxVolumeSlider)    sfxVolumeSlider.value    = sfxVol;
-
-        // Применяем сразу
+       
         ApplyMasterVolume(masterVol);
         ApplyMusicVolume(musicVol);
         ApplySFXVolume(sfxVol);
@@ -49,20 +48,16 @@ public class SettingsUIManager : MonoBehaviour
 
     private void ApplyMasterVolume(float value)
     {
-        // Здесь включаете свою систему микширования звуков, к примеру:
-        // AudioMixer.SetFloat("MasterVolume", Mathf.Log10(value) * 20f);
         Debug.Log($"[SettingsMenu] Master Volume set to {value}");
     }
 
     private void ApplyMusicVolume(float value)
     {
-        // AudioMixer.SetFloat("MusicVolume", Mathf.Log10(value) * 20f);
         Debug.Log($"[SettingsMenu] Music Volume set to {value}");
     }
 
     private void ApplySFXVolume(float value)
     {
-        // AudioMixer.SetFloat("SFXVolume", Mathf.Log10(value) * 20f);
         Debug.Log($"[SettingsMenu] SFX Volume set to {value}");
     }
 }

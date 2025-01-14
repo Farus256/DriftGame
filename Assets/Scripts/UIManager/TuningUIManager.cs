@@ -39,8 +39,6 @@ public class TuningUIManager : MonoBehaviour
         playerStats = PlayerDataManager.LoadPlayerStats();
         if (playerStats != null)
         {
-            // Подписываемся не только на OnMoneyChanged, но и на OnGoldChanged,
-            // если вдруг нужно обновлять какие-то элементы UI, зависящие от золота.
             playerStats.OnMoneyChanged += OnMoneyChanged;
             playerStats.OnGoldChanged  += OnGoldChanged;
         }

@@ -27,15 +27,13 @@ public class MultiPlayerCarSpawner : MonoBehaviourPun
             return;
         }
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-
-        // Проверяем, выбран ли автомобиль
+        
         if (CarSelection.SelectedCarId < 0)
         {
             Debug.LogError("[MultiPlayerCarSpawner] CarSelection.SelectedCarId не выбран!");
             return;
         }
-
-        // Находим описание выбранного авто
+        
         CarStats[] allCars = CarDataManager.LoadAllCarStats();
         CarStats selectedCar = null;
         foreach (CarStats car in allCars)
@@ -51,8 +49,7 @@ public class MultiPlayerCarSpawner : MonoBehaviourPun
             Debug.LogError($"[MultiPlayerCarSpawner] Автомобиль с ID {CarSelection.SelectedCarId} не найден!");
             return;
         }
-
-        // Готовим InstantiationData
+        
         string prefabPath = $"CarPrefabs/{selectedCar.PrefabName}";
         int carID = selectedCar.ID;
         string paintColorHex = selectedCar.PaintColor;
@@ -64,14 +61,13 @@ public class MultiPlayerCarSpawner : MonoBehaviourPun
             paintColorHex,
             activePartsArr
         };
-
-        // Спавним автомобиль с дополнительными данными
+        
         GameObject playerCar = PhotonNetwork.Instantiate(
             prefabPath,
             spawnPoint.position,
             spawnPoint.rotation,
             0,
-            instantiationData // <-- передаём!
+            instantiationData
         );
 
         if (playerCar == null)
@@ -89,20 +85,14 @@ public class MultiPlayerCarSpawner : MonoBehaviourPun
 
         if (pv.IsMine)
         {
-            // Применяем параметры (мощность, масса и т.д.) — 
-            //   либо передаём их тоже через InstantiationData, 
-            //   либо делаем локально:
             ApplyCarParameters(playerCar, selectedCar);
-
-            // Ставим тег "Player"
+            
             playerCar.tag = "Player";
-
-            // Уведомляем, что локальная машина создана
+            
             OnLocalCarSpawned?.Invoke(playerCar);
         }
         else
         {
-            // Если это не наша машина — отключаем локальный контроллер
             var controller = playerCar.GetComponent<CarController>();
             if (controller)
             {
@@ -113,7 +103,6 @@ public class MultiPlayerCarSpawner : MonoBehaviourPun
 
     private void ApplyCarParameters(GameObject car, CarStats stats)
     {
-        // То же, что раньше
         CarController controller = car.GetComponent<CarController>();
         if (controller)
         {

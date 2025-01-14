@@ -7,16 +7,13 @@ public class PlayerStats
 {
     [SerializeField] private string playerName;
     public string PlayerName => playerName;
-
-    // ----- MONEY -----
+    
     [SerializeField] private float money;
     public float Money => money;
-
-    // ----- GOLD (New Currency) -----
+    
     [SerializeField] private float gold;
     public float Gold => gold;
-
-    // --------------------------------
+    
     [SerializeField] private float totalDriftPoints;
     public float TotalDriftPoints => totalDriftPoints;
 
@@ -25,10 +22,7 @@ public class PlayerStats
 
     [SerializeField] private List<int> purchasedCars = new List<int>();
     public List<int> PurchasedCars => purchasedCars;
-
-    // События при изменении денежных средств
     public event Action<float> OnMoneyChanged;
-    // Новое событие при изменении золота
     public event Action<float> OnGoldChanged;
 
     public PlayerStats() { }

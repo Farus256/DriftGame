@@ -54,8 +54,7 @@ public static class PlayerDataManager
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
             File.WriteAllText(path, json);
-
-            // Обновляем кэшированную версию
+            
             cachedPlayerStats = stats;
         }
         catch (Exception e)

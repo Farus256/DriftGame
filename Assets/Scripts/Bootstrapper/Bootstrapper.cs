@@ -10,15 +10,15 @@ public class Bootstrapper : MonoBehaviour
 
     private void InitializeGame()
     {
-        // 1) Загружаем машины
+        //Загружаем машины
         var allCars = CarDataManager.LoadAllCarStats();
         Debug.Log($"[Bootstrap] Cars loaded: {allCars.Length}");
 
-        // 2) Загружаем игрока
+        //Загружаем игрока
         var playerStats = PlayerDataManager.LoadPlayerStats();
         Debug.Log($"[Bootstrap] Player name = {playerStats.PlayerName}, money = {playerStats.Money}");
 
-        // 3) Переход на сцену через GlobalEventManager
+        //Переход на сцену через GlobalEventManager
         GlobalEventManager.TriggerSceneChanged(sceneToLoad);
     }
 }

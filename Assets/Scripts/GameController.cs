@@ -1,7 +1,7 @@
 using UnityEngine;
 using Photon.Pun;
-using System;
 
+//Класс для контроля действий при запущенном уровне (singl/multiplayer)
 public class GameController : MonoBehaviour
 {
     public static GameController Instance { get; private set; }
@@ -27,15 +27,13 @@ public class GameController : MonoBehaviour
         }
 
         Instance = this;
-
-        // Подписываемся на событие спавна локального автомобиля в мультиплеере
+        
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
             MultiPlayerCarSpawner.OnLocalCarSpawned += HandleLocalCarSpawned;
         }
         else
         {
-            // Подписываемся на событие спавна автомобиля в однопользовательском режиме
             GameCarSpawner.OnSinglePlayerCarSpawned += HandleSinglePlayerCarSpawned;
         }
     }
@@ -44,12 +42,10 @@ public class GameController : MonoBehaviour
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            // Отписываемся от события при уничтожении объекта в мультиплеере
             MultiPlayerCarSpawner.OnLocalCarSpawned -= HandleLocalCarSpawned;
         }
         else
         {
-            // Отписываемся от события при уничтожении объекта в однопользовательском режиме
             GameCarSpawner.OnSinglePlayerCarSpawned -= HandleSinglePlayerCarSpawned;
         }
     }
@@ -63,7 +59,6 @@ public class GameController : MonoBehaviour
     {
         if (LevelOver)
         {
-            // Здесь можно добавить логику для окончания уровня (например, показать UI)
             return;
         }
 
@@ -82,29 +77,18 @@ public class GameController : MonoBehaviour
             DriftPoints += speedFactor * 5f * Time.deltaTime;
         }
     }
-
-    /// <summary>
-    /// Обработка спавна локального автомобиля в мультиплеере
-    /// </summary>
-    /// <param name="localCar">Заспавненный локальный автомобиль</param>
+    
     private void HandleLocalCarSpawned(GameObject localCar)
     {
         AssignLocalPlayerCar(localCar);
     }
-
-    /// <summary>
-    /// Обработка спавна автомобиля в однопользовательском режиме
-    /// </summary>
-    /// <param name="car">Заспавненный автомобиль</param>
+    
     private void HandleSinglePlayerCarSpawned(GameObject car)
     {
         AssignLocalPlayerCar(car);
     }
-
-    /// <summary>
-    /// Назначение CarController из переданного объекта автомобиля
-    /// </summary>
-    /// <param name="car">Объект автомобиля</param>
+   
+    //Проверка назначения локального авто
     private void AssignLocalPlayerCar(GameObject car)
     {
         LocalPlayerCar = car.GetComponent<CarController>();
@@ -117,29 +101,19 @@ public class GameController : MonoBehaviour
             Debug.Log($"[GameController] Локальный автомобиль назначен: {car.name}");
         }
     }
-
-    /// <summary>
-    /// Возвращает оставшееся время уровня
-    /// </summary>
-    /// <returns>Оставшееся время в секундах</returns>
+    
     public float GetTimeLeft()
     {
         return _timeLeft;
     }
-
-    /// <summary>
-    /// Сброс параметров игры
-    /// </summary>
+    
     public void ResetGame()
     {
         _timeLeft = LevelDuration;
         DriftPoints = 0f;
         LevelOver = false;
     }
-
-    /// <summary>
-    /// Завершение уровня
-    /// </summary>
+    
     private void EndLevel()
     {
         LevelOver = true;
@@ -151,7 +125,5 @@ public class GameController : MonoBehaviour
         }
 
         OnLevelEnd?.Invoke();
-
-        // Здесь можно добавить логику награждения, перехода на следующий уровень и т.д.
     }
 }

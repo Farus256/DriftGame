@@ -4,8 +4,6 @@ using System;
 public class GameCarSpawner : MonoBehaviour
 {
     [SerializeField] private Transform playerCarSpawnPoint;
-
-    // Событие для уведомления о спавне автомобиля в одиночном режиме
     public static event Action<GameObject> OnSinglePlayerCarSpawned;
 
     private void Start()
@@ -32,15 +30,12 @@ public class GameCarSpawner : MonoBehaviour
         if (!prefab) return;
         GameObject playerCar = Instantiate(prefab, playerCarSpawnPoint.position, playerCarSpawnPoint.rotation);
         
-        // Назначаем тег "Player" для автомобиля
         playerCar.tag = "Player";
-        Debug.Log($"[GameCarSpawner] Автомобиль {playerCar.name} получил тег 'Player'");
 
         ApplyCarParameters(playerCar, selectedCar);
         ApplyPaintColor(playerCar, selectedCar.PaintColor);
         ApplyExtraParts(playerCar, selectedCar.ActiveExtraParts);
-
-        // Вызываем событие спавна автомобиля в одиночном режиме
+        
         OnSinglePlayerCarSpawned?.Invoke(playerCar);
     }
 

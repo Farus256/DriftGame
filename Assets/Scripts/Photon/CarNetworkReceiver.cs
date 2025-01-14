@@ -6,7 +6,6 @@ public class CarNetworkReceiver : MonoBehaviourPun
 {
     private void Awake()
     {
-        // Берём InstantiationData
         if(!PhotonNetwork.IsConnected) return;
         if (photonView != null && photonView.InstantiationData != null)
         {

@@ -1,7 +1,6 @@
 using UnityEngine;
 using Photon.Pun;
 
-// Добавим PhotonView, PhotonTransformView руками или в Инспекторе
 [RequireComponent(typeof(Rigidbody), typeof(PhotonView))]
 public class CarController : MonoBehaviourPun
 {
@@ -11,7 +10,7 @@ public class CarController : MonoBehaviourPun
     public WheelCollider rearLeftWheelCollider;
     public WheelCollider rearRightWheelCollider;
 
-    [Header("Wheel Transforms (Visuals)")]
+    [Header("Wheel Transforms")]
     public Transform frontLeftWheelTransform;
     public Transform frontRightWheelTransform;
     public Transform rearLeftWheelTransform;
@@ -43,27 +42,23 @@ public class CarController : MonoBehaviourPun
 
     private bool  _wasDriftingLastFrame;
     private float _driftStartTime;
-
-    // --- Поля для мобильного управления (пример) ---
+    
     public bool acceleratePressed = false;
     public bool brakePressed      = false;
     public bool steerLeftPressed  = false;
     public bool steerRightPressed = false;
     public bool handbrakePressed  = false;
 
-    private void Start()
+    private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-
-        // Сохраняем оригинальные настройки трения задних колёс
+        
         _rearLeftOriginalFriction  = rearLeftWheelCollider.sidewaysFriction;
         _rearRightOriginalFriction = rearRightWheelCollider.sidewaysFriction;
     }
 
     private void Update()
     {
-        // Если это не наша машина - выходим (не обрабатываем ввод), 
-        // но колёса всё равно визуально обновим.
         if (!photonView.IsMine && PhotonNetwork.IsConnected)
         {
             UpdateWheelVisuals(frontLeftWheelCollider,  frontLeftWheelTransform,  true);
@@ -75,8 +70,8 @@ public class CarController : MonoBehaviourPun
 
         if (CanDrive)
         {
-            float verticalInput   = GetVerticalInput();   // газ/тормоз
-            float horizontalInput = GetHorizontalInput(); // поворот
+            float verticalInput   = GetVerticalInput(); 
+            float horizontalInput = GetHorizontalInput();
 
             HandleMotor(verticalInput);
             HandleSteering(horizontalInput);
@@ -93,8 +88,7 @@ public class CarController : MonoBehaviourPun
 
         // Дрифт (учёт времени дрифта)
         HandleDriftTimeCounting();
-
-        // Обновляем визуал колёс (у локального игрока)
+        
         UpdateWheelVisuals(frontLeftWheelCollider,  frontLeftWheelTransform,  true);
         UpdateWheelVisuals(frontRightWheelCollider, frontRightWheelTransform, true);
         UpdateWheelVisuals(rearLeftWheelCollider,   rearLeftWheelTransform,   false);
@@ -103,15 +97,13 @@ public class CarController : MonoBehaviourPun
         _wasDriftingLastFrame = _isDrifting;
     }
 
-    // --- Методы получения «мобильного» ввода ---
+    // --- Методы получения мобильного ввода ---
     float GetVerticalInput()
     {
-        // Газ вперёд
         if (acceleratePressed && !brakePressed)
         {
             return 1f;
         }
-        // Тормоз / Реверс
         else if (brakePressed && !acceleratePressed)
         {
             return -1f;
@@ -124,12 +116,10 @@ public class CarController : MonoBehaviourPun
 
     float GetHorizontalInput()
     {
-        // Поворот влево
         if (steerLeftPressed && !steerRightPressed)
         {
             return -1f;
         }
-        // Поворот вправо
         else if (steerRightPressed && !steerLeftPressed)
         {
             return 1f;
@@ -157,7 +147,6 @@ public class CarController : MonoBehaviourPun
 
         if (_isDrifting)
         {
-            // Сниженное сцепление задних колёс
             AdjustDriftFriction(rearLeftWheelCollider,  _rearLeftOriginalFriction, driftFactor);
             AdjustDriftFriction(rearRightWheelCollider, _rearRightOriginalFriction, driftFactor);
 
@@ -176,25 +165,21 @@ public class CarController : MonoBehaviourPun
         }
         else
         {
-            // Восстанавливаем обычное сцепление
             ResetFriction(rearLeftWheelCollider,  _rearLeftOriginalFriction);
             ResetFriction(rearRightWheelCollider, _rearRightOriginalFriction);
         }
-
-        // Применяем угол руля (передние колёса)
+        
         frontLeftWheelCollider.steerAngle  = _currentSteerAngle;
         frontRightWheelCollider.steerAngle = _currentSteerAngle;
     }
 
     private void HandleBrakes(float verticalInput)
     {
-        // Ручник => блокирует задние колёса
         if (handbrakePressed)
         {
             rearLeftWheelCollider.brakeTorque  = handbrakeForce;
             rearRightWheelCollider.brakeTorque = handbrakeForce;
-
-            // Чуть снижаем сцепление
+            
             AdjustDriftFriction(rearLeftWheelCollider,  _rearLeftOriginalFriction, 0.8f);
             AdjustDriftFriction(rearRightWheelCollider, _rearRightOriginalFriction, 0.8f);
         }
@@ -209,8 +194,7 @@ public class CarController : MonoBehaviourPun
                 ResetFriction(rearRightWheelCollider, _rearRightOriginalFriction);
             }
         }
-
-        // Торможение передними колёсами:
+        
         float forwardSpeed = Vector3.Dot(_rb.velocity, transform.forward);
 
         if (verticalInput < 0f && forwardSpeed > 1f)
@@ -273,8 +257,7 @@ public class CarController : MonoBehaviourPun
     {
         wheelCollider.sidewaysFriction = originalFriction;
     }
-
-    // -- Главное изменение: убираем двойное вращение, полагаемся на GetWorldPose
+    
     private void UpdateWheelVisuals(WheelCollider collider, Transform wheelTransform, bool isFrontWheel)
     {
         if (wheelTransform == null) return;

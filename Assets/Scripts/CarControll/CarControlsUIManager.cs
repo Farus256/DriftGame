@@ -20,7 +20,6 @@ public class CarControlsUIManager : MonoBehaviour
 
     private void Awake()
     {
-        // Активируем мобильный UI, если он назначен
         if (mobileUIRoot != null)
             mobileUIRoot.SetActive(true);
     }
@@ -29,12 +28,10 @@ public class CarControlsUIManager : MonoBehaviour
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            // Подписываемся на событие спавна локального автомобиля в мультиплеере
             MultiPlayerCarSpawner.OnLocalCarSpawned += HandleLocalCarSpawned;
         }
         else
         {
-            // Подписываемся на событие спавна автомобиля в однопользовательском режиме
             GameCarSpawner.OnSinglePlayerCarSpawned += HandleSinglePlayerCarSpawned;
         }
     }
@@ -43,12 +40,10 @@ public class CarControlsUIManager : MonoBehaviour
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            // Отписываемся от события при отключении в мультиплеере
             MultiPlayerCarSpawner.OnLocalCarSpawned -= HandleLocalCarSpawned;
         }
         else
         {
-            // Отписываемся от события при отключении в однопользовательском режиме
             GameCarSpawner.OnSinglePlayerCarSpawned -= HandleSinglePlayerCarSpawned;
         }
     }
@@ -57,29 +52,17 @@ public class CarControlsUIManager : MonoBehaviour
     {
         SetupButtonListeners();
     }
-
-    /// <summary>
-    /// Обработка спавна локального автомобиля в мультиплеере
-    /// </summary>
-    /// <param name="localCar">Заспавненный локальный автомобиль</param>
+    
     private void HandleLocalCarSpawned(GameObject localCar)
     {
         AssignCarController(localCar);
     }
-
-    /// <summary>
-    /// Обработка спавна автомобиля в однопользовательском режиме
-    /// </summary>
-    /// <param name="car">Заспавненный автомобиль</param>
+    
     private void HandleSinglePlayerCarSpawned(GameObject car)
     {
         AssignCarController(car);
     }
-
-    /// <summary>
-    /// Назначение CarController из переданного объекта автомобиля
-    /// </summary>
-    /// <param name="car">Объект автомобиля</param>
+    
     private void AssignCarController(GameObject car)
     {
         carController = car.GetComponent<CarController>();
@@ -91,10 +74,7 @@ public class CarControlsUIManager : MonoBehaviour
 
         Debug.Log($"[CarControlsUIManager] CarController назначен на: {car.name}");
     }
-
-    /// <summary>
-    /// Настройка слушателей для UI кнопок
-    /// </summary>
+    
     private void SetupButtonListeners()
     {
         if (accelerateButton != null)
@@ -132,13 +112,7 @@ public class CarControlsUIManager : MonoBehaviour
             flipCarButton.onClick.AddListener(OnFlipCarButton);
         }
     }
-
-    /// <summary>
-    /// Добавление EventTrigger к кнопке
-    /// </summary>
-    /// <param name="target">Кнопка</param>
-    /// <param name="eventTriggerType">Тип события</param>
-    /// <param name="action">Действие при событии</param>
+    
     private void AddEventTrigger(GameObject target, EventTriggerType eventTriggerType, UnityEngine.Events.UnityAction action)
     {
         EventTrigger trigger = target.GetComponent<EventTrigger>();
